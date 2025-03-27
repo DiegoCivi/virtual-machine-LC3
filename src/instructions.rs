@@ -1,4 +1,4 @@
-use crate::{hardware::{Register, Registers}, utils::{sign_extend, update_flags}};
+use crate::{hardware::{Register, Registers}, utils::{mem_read, sign_extend, update_flags}};
 
 /// Adds to values
 /// 
@@ -31,5 +31,20 @@ fn add(instr: u16, regs: &mut Registers) {
         regs[dr] = regs[r1] + regs[r2];
     }
 
+    update_flags(dr, regs);
+}
+
+fn load_indirect(instr: u16, regs: &mut Registers) {
+    // Destination register
+    let dr = Register::from((instr >> 9) & 0x7);
+    // PCoffset 9 section
+    let mut pc_offset = instr & 0xFF; 
+    pc_offset = sign_extend(pc_offset, 9);
+    // Add the number that was on PCoffset 9 section to get the 
+    // memory location we need to look at for the final address
+    let address_of_final_address = regs[Register::PC] + pc_offset;
+    let final_address = mem_read(address_of_final_address);
+    let value = mem_read(final_address);
+    regs[dr] = value;
     update_flags(dr, regs);
 }

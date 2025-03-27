@@ -23,3 +23,7 @@ pub fn update_flags(r: Register, regs: &mut Registers) {
         regs[Register::COND] = CondFlag::POS as u16;
     }
 }
+
+pub fn mem_read(address: u16) -> u16 {
+    todo!()
+}
