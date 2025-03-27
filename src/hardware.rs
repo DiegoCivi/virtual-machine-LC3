@@ -1,3 +1,5 @@
+use std::ops::{Index, IndexMut};
+
 const MEMORY_MAX: u16 = u16::MAX;
 const REGS_COUNT: usize = 10;
 
@@ -12,7 +14,8 @@ struct Memory {
 /// - 8 general purpose registers (R0-R7)
 /// - 1 program counter register (PC)
 /// - 1 condition flags register (COND)
-enum Register {
+#[derive(Clone, Copy)]
+pub enum Register {
     R0 = 0,
     R1 = 1,
     R2 = 2,
@@ -25,13 +28,53 @@ enum Register {
     COND = 9,
 }
 
+impl From<u16> for Register {
+    fn from(value: u16) -> Self {
+        match value {
+            0 => Self::R0,
+            1 => Self::R1,
+            2 => Self::R2,
+            3 => Self::R3,
+            4 => Self::R4,
+            5 => Self::R5,
+            6 => Self::R6,
+            7 => Self::R7,
+            8 => Self::PC,
+            9 => Self::COND,
+            _ => panic!("Value out of bounds"), // TODO: Check how to handle this case
+        }
+    }
+}
+
 /// Abstraction of the registers storage.
-struct Registers {
-    inner: [Register; REGS_COUNT],
+pub struct Registers {
+    inner: [u16; REGS_COUNT],
+}
+
+impl Registers {
+    fn new() -> Self {
+        Self { inner: [0; REGS_COUNT] }
+    }
+}
+
+impl Index<Register> for Registers {
+    type Output = u16;
+
+    fn index(&self, reg: Register) -> &Self::Output {
+        let index = reg as usize;
+        &self.inner[index]
+    }
+}
+
+impl IndexMut<Register> for Registers {
+    fn index_mut(&mut self, reg: Register) -> &mut Self::Output {
+        let index = reg as usize;
+        &mut self.inner[index]
+    }
 }
 
 /// Opcodes that identify an operation
-/// thet the VM supports.
+/// that the VM supports.
 enum OpCode {
     BR = 0,
     ADD = 1,
@@ -53,7 +96,7 @@ enum OpCode {
 
 /// Condition flags that indicate
 /// the result of the previous calculation
-enum CondFlag {
+pub enum CondFlag {
     POS = 1 << 0,
     ZRO = 1 << 1,
     NEG = 1 << 2,
