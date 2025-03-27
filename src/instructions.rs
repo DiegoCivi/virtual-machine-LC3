@@ -1,5 +1,16 @@
 use crate::{hardware::{Register, Registers}, utils::{sign_extend, update_flags}};
 
+/// Adds to values
+/// 
+/// This instruction can happen in two different ways. One is
+/// by adding two elements that are in a register each, this is called
+/// register mode. The other mode is to add the value of a register
+/// with the one that is embedded in the instruction itself.
+/// 
+/// ### Arguments
+/// 
+/// - `instr`: An u16 that has the encoding of the whole instruction to execute.
+/// - `regs`: A Registers struct that handles each register.
 fn add(instr: u16, regs: &mut Registers) {
     // Destination register
     let dr = Register::from((instr >> 9) & 0x7);
