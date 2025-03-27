@@ -29,6 +29,7 @@ pub enum Register {
 }
 
 impl From<u16> for Register {
+    /// Allows to transform an u16 into a corresponding Register
     fn from(value: u16) -> Self {
         match value {
             0 => Self::R0,
@@ -52,6 +53,8 @@ pub struct Registers {
 }
 
 impl Registers {
+    /// Creates a new instance of Registers with all the values of the registers
+    /// set to 0
     fn new() -> Self {
         Self { inner: [0; REGS_COUNT] }
     }
