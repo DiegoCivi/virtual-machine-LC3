@@ -13,16 +13,33 @@ struct Memory {
 /// - 1 program counter register (PC)
 /// - 1 condition flags register (COND)
 enum Register {
-    R0 = 0,
-    R1 = 1,
-    R2 = 2,
-    R3 = 3,
-    R4 = 4,
-    R5 = 5,
-    R6 = 6,
-    R7 = 7,
-    PC = 8,
-    COND = 9,
+    R0,
+    R1,
+    R2,
+    R3,
+    R4,
+    R5,
+    R6,
+    R7,
+    PC,
+    COND,
+}
+
+impl Register {
+    fn index(&self) -> usize {
+        match self {
+            Register::R0 => 0,
+            Register::R1 => 1,
+            Register::R2 => 2,
+            Register::R3 => 3,
+            Register::R4 => 4,
+            Register::R5 => 5,
+            Register::R6 => 6,
+            Register::R7 => 7,
+            Register::PC => 8,
+            Register::COND => 9,
+        }
+    }
 }
 
 /// Abstraction of the registers storage.
@@ -33,22 +50,45 @@ struct Registers {
 /// Opcodes that identify an operation
 /// thet the VM supports.
 enum OpCode {
-    Br = 0,
-    Add = 1,
-    Ld = 2,
-    St = 3,
-    Jsr = 4,
-    And = 5,
-    Ldr = 6,
-    Str = 7,
-    Rti = 8,
-    Not = 9,
-    Ldi = 10,
-    Sti = 11,
-    Jmp = 12,
-    Res = 13,
-    Lea = 14,
-    Trap = 15,
+    Br,
+    Add,
+    Ld,
+    St,
+    Jsr,
+    And,
+    Ldr,
+    Str,
+    Rti,
+    Not,
+    Ldi,
+    Sti,
+    Jmp,
+    Res,
+    Lea,
+    Trap,
+}
+
+impl OpCode {
+    fn index(&self) -> usize {
+        match self {
+            OpCode::Br => 0,
+            OpCode::Add => 1,
+            OpCode::Ld => 2,
+            OpCode::St => 3,
+            OpCode::Jsr => 4,
+            OpCode::And => 5,
+            OpCode::Ldr => 6,
+            OpCode::Str => 7,
+            OpCode::Rti => 8,
+            OpCode::Not => 9,
+            OpCode::Ldi => 10,
+            OpCode::Sti => 11,
+            OpCode::Jmp => 12,
+            OpCode::Res => 13,
+            OpCode::Lea => 14,
+            OpCode::Trap => 15,
+        }
+    }
 }
 
 /// Condition flags that indicate
@@ -57,6 +97,16 @@ enum CondFlag {
     Pos = 1 << 0,
     Zro = 1 << 1,
     Neg = 1 << 2,
+}
+
+impl CondFlag {
+    fn value(&self) -> u16 {
+        match self {
+            CondFlag::Pos => 1 << 0,
+            CondFlag::Zro => 1 << 1,
+            CondFlag::Neg => 1 << 2,
+        }
+    }
 }
 
 /// Registers that are located on the memory
