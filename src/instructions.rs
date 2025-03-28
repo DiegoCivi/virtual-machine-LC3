@@ -123,7 +123,7 @@ mod tests {
     #[test]
     /// Test if the condition flag was set to POS when the
     /// result of an addition is a positive number.
-    fn add_updates_cond_flag_to_POS() {
+    fn add_updates_cond_flag_to_pos() {
         let sr1 = 0x0001;
         let sr2 = 0x0002;
         let result = 0x0003;
@@ -142,7 +142,7 @@ mod tests {
     #[test]
     /// Test if the condition flag was set to ZRO when the
     /// result of an addition is a 0.
-    fn add_updates_cond_flag_to_ZRO() {
+    fn add_updates_cond_flag_to_zro() {
         let sr1 = 0x0001;
         let result = 0x000; 
         // Create the registers and set the value on R1

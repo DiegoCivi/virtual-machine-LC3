@@ -7,7 +7,6 @@ mod instructions;
 
 fn main() {
     let sr1 = 0x0001;
-    let result = 0x003; 
     // Create the registers and set the value on R1
     let mut registers = Registers::new();
     registers[Register::R1] = sr1;
