@@ -80,7 +80,7 @@ fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     if imm_flag == 1 {
         // Get the imm5 section, then do the bitwise and with the content on R1.
         let mut imm5 = instr & 0x1F;
-        imm5 = sign_extend(instr, 5)?;
+        imm5 = sign_extend(imm5, 5)?;
         regs[dr] = regs[Register::R1] & imm5;
     } else {
         // Get the SR2 section, then do the bitwise and with the content on R1.
@@ -189,5 +189,39 @@ mod tests {
         let _ = add(instr, &mut registers);
 
         assert_eq!(registers[Register::Cond], CondFlag::Zro.value());
+    }
+
+    #[test]
+    fn and_with_register_mode() {
+        let sr1 = 0xFFFF;
+        let sr2 = 0x0000;
+        let result = 0x0000;
+        // Create the registers and set the values on R1 and R2
+        let mut registers = Registers::new();
+        registers[Register::R1] = sr1;
+        registers[Register::R2] = sr2;
+        // The instruction will have the following encoding:
+        // 0 1 0 1 0 0 0 0 0 1 0 0 0 0 1 0
+        let instr = 0x5042;
+        let _ = and(instr, &mut registers);
+
+        // Check if in R0 we have the desired result
+        assert_eq!(registers[Register::R0], result);
+    }
+
+    #[test]
+    fn and_with_immediate_mode() {
+        let sr1 = 0xFFFF;
+        let result = 0x0000; 
+        // Create the registers and set the value on R1
+        let mut registers = Registers::new();
+        registers[Register::R1] = sr1;
+        // The instruction will have the following encoding:
+        // 0 1 0 1  0 0 0 0  0 1 0 0  0 0 0 0
+        let instr = 0x5040;
+        let _ = and(instr, &mut registers);
+
+        // Check if in R0 we have the desired result
+        assert_eq!(registers[Register::R0], result);
     }
 }
