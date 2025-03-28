@@ -11,7 +11,7 @@ use crate::{hardware::{Register, Registers}, utils::{mem_read, sign_extend, upda
 /// 
 /// - `instr`: An u16 that has the encoding of the whole instruction to execute.
 /// - `regs`: A Registers struct that handles each register.
-fn add(instr: u16, regs: &mut Registers) {
+pub fn add(instr: u16, regs: &mut Registers) {
     // Destination register
     let dr = Register::from((instr >> 9) & 0x7);
     // First operand
@@ -21,8 +21,8 @@ fn add(instr: u16, regs: &mut Registers) {
 
     if imm_flag == 1 {
         // Get the 5 bits of the imm5 section (first 5 bits) and sign extend them
-        let mut imm5 = instr & 0x1;
-        imm5 = sign_extend(instr, 5);
+        let mut imm5 = instr & 0x1F;
+        imm5 = sign_extend(imm5, 5);
         regs[dr] = regs[r1] + imm5;
     } else {
         // Since the immediate flag was off, we only need the SR2 section (first 3 bits).
@@ -47,4 +47,44 @@ fn load_indirect(instr: u16, regs: &mut Registers) {
     let value = mem_read(final_address);
     regs[dr] = value;
     update_flags(dr, regs);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn add_with_register_mode() {
+        let sr1 = 0x0001;
+        let sr2 = 0x0002;
+        let result = 0x0003;
+        // Create the registers and set the values on R1 and R2
+        let mut registers = Registers::new();
+        registers[Register::R1] = sr1;
+        registers[Register::R2] = sr2;
+        // The instruction will have the following encoding:
+        // 0 0 0 1 0 0 0 0 0 1 0 0 0 0 1 0
+        let instr = 0x1042;
+        add(instr, &mut registers);
+
+        // Check if in R0 we have the desired resutl
+        assert_eq!(registers[Register::R0], result);
+    }
+
+    #[test]
+    fn add_with_immediate_mode() {
+        let sr1 = 0x0001;
+        let result = 0x003; 
+        // Create the registers and set the value on R1
+        let mut registers = Registers::new();
+        registers[Register::R1] = sr1;
+        // The instruction will have the following encoding:
+        // 0 0 0 1 0 0 0 0 0 1 1 0 0 0 1 0
+        let instr = 0x1062;
+        add(instr, &mut registers);
+
+        // Check if in R0 we have a 3
+        assert_eq!(registers[Register::R0], result);
+    }
+
 }

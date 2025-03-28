@@ -1,7 +1,19 @@
+use hardware::{Register, Registers};
+use instructions::add;
+
 mod hardware;
 mod utils;
 mod instructions;
 
 fn main() {
-    println!("Hello, world!");
+    let sr1 = 0x0001;
+    let result = 0x003; 
+    // Create the registers and set the value on R1
+    let mut registers = Registers::new();
+    registers[Register::R1] = sr1;
+    // The instruction will have the following encoding:
+    // 0 0 0 1 0 0 0 0 0 1 1 0 0 0 1 0
+    let instr = 0x1062;
+    add(instr, &mut registers);
+
 }

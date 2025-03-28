@@ -55,7 +55,7 @@ pub struct Registers {
 impl Registers {
     /// Creates a new instance of Registers with all the values of the registers
     /// set to 0
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self { inner: [0; REGS_COUNT] }
     }
 }
