@@ -54,6 +54,9 @@ mod tests {
     use super::*;
 
     #[test]
+    /// Add two values in register mode. One value will be in
+    /// R1 and the other in R2, while the destination register
+    /// will be R0.
     fn add_with_register_mode() {
         let sr1 = 0x0001;
         let sr2 = 0x0002;
@@ -67,11 +70,14 @@ mod tests {
         let instr = 0x1042;
         add(instr, &mut registers);
 
-        // Check if in R0 we have the desired resutl
+        // Check if in R0 we have the desired result
         assert_eq!(registers[Register::R0], result);
     }
 
     #[test]
+    /// Add the two values in immediate mode. One value will be
+    /// in R1 and the other will be embedded in the instruction
+    /// encoding, while the destination register will be R0.
     fn add_with_immediate_mode() {
         let sr1 = 0x0001;
         let result = 0x003; 
@@ -83,7 +89,7 @@ mod tests {
         let instr = 0x1062;
         add(instr, &mut registers);
 
-        // Check if in R0 we have a 3
+        // Check if in R0 we have the desired result
         assert_eq!(registers[Register::R0], result);
     }
 
