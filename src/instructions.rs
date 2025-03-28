@@ -129,6 +129,14 @@ fn branch(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     Ok(())
 }
 
+/// Changes the PC with the value of a specified register
+fn jump(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+    // Get the BaseR section
+    let baser_r = Register::from_u16((instr >> 6) & 0x7)?;
+    regs[Register::PC] = regs[baser_r];
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use crate::hardware::CondFlag;
@@ -300,9 +308,9 @@ mod tests {
         assert_eq!(registers[Register::PC], 0x0001);
     }  
 
+    #[test]
     /// Test if branch changes the PC for condition
     /// flag set to zero
-    #[test]
     fn branch_changes_pc_with_zro_cond_flag() {
         // Create the registers and set the value on register Cond
         let mut registers = Registers::new();
@@ -316,9 +324,9 @@ mod tests {
         assert_eq!(registers[Register::PC], 0x0001);
     }  
 
-    /// test if branch changes the pc for condition
-    /// flag set to negative
     #[test]
+    /// Test if branch changes the PC for condition
+    /// flag set to negative
     fn branch_changes_pc_with_neg_cond_flag() {
         // Create the registers and set the value on register Cond
         let mut registers = Registers::new();
@@ -330,5 +338,23 @@ mod tests {
 
         // Check if the PC register was set to 1
         assert_eq!(registers[Register::PC], 0x0001);
-    }  
+    }
+
+    #[test]
+    /// Test if jump changes the value of the PC is set
+    /// to the value of the register specified in the
+    /// encoding
+    fn jump_changes_pc() {
+        // Create the registers and set the value of R1 register
+        let mut registers = Registers::new();
+        let result = 0xFFFF;
+        registers[Register::R1] = result;
+        // The instruction will have the following encoding:
+        // 1 1 0 0  0 0 0 0  0 1 0 0  0 0 0 0
+        let instr = 0xC040;
+        let _ = jump(instr, &mut registers);
+
+        // Check if the PC was set with the value that R1 had
+        assert_eq!(registers[Register::PC], result);
+    }
 }
