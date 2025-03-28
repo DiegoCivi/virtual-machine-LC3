@@ -57,6 +57,21 @@ fn load_indirect(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     Ok(())
 }
 
+/// Does the bitwise 'NOT' for a value stored in a register.
+/// 
+/// ### Arguments
+/// 
+/// - `instr`: An u16 that has the encoding of the whole instruction to execute.
+/// - `regs`: A Registers struct that handles each register.
+fn not(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+    let dr = Register::from_u16((instr >> 9) & 0x7)?;
+    let sr = Register::from_u16((instr >> 6) & 0x7)?;
+
+    regs[dr] = !regs[sr];
+    update_flags(dr, regs);
+    Ok(())
+}
+
 /// Does the bitwise 'AND' between two values and stores the result
 /// in a register.
 /// 
@@ -220,6 +235,22 @@ mod tests {
         // 0 1 0 1  0 0 0 0  0 1 0 0  0 0 0 0
         let instr = 0x5040;
         let _ = and(instr, &mut registers);
+
+        // Check if in R0 we have the desired result
+        assert_eq!(registers[Register::R0], result);
+    }
+
+    #[test]
+    fn bitwise_not() {
+        let sr = 0xFFFF;
+        let result = 0x0000;
+        // Create the registers and set the value on R1
+        let mut registers = Registers::new();
+        registers[Register::R1] = sr;
+        // The instruction will have the following encoding:
+        // 1 0 0 1  0 0 0 0  0 1 1 1  1 1 1 1
+        let instr = 0x907F;
+        let _ = not(instr, &mut registers);
 
         // Check if in R0 we have the desired result
         assert_eq!(registers[Register::R0], result);
