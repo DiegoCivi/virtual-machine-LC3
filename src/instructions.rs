@@ -107,6 +107,17 @@ fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     Ok(())
 }
 
+fn branch(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+    let mut pc_offset = instr & 0x1FF;
+    pc_offset = sign_extend(pc_offset, 9)?;
+    let cond_flag = (instr >> 9) & 0x7;
+    let coincides = cond_flag & regs[Register::Cond];
+    if coincides == cond_flag {
+        regs[Register::PC] += pc_offset;
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use crate::hardware::CondFlag;
@@ -207,6 +218,8 @@ mod tests {
     }
 
     #[test]
+    /// Test if doing the bitwise 'AND' with register mode
+    /// gets the correct result
     fn and_with_register_mode() {
         let sr1 = 0xFFFF;
         let sr2 = 0x0000;
@@ -225,6 +238,8 @@ mod tests {
     }
 
     #[test]
+    /// Test if doing the bitwise 'AND' with immediate mode
+    /// gets the correct result
     fn and_with_immediate_mode() {
         let sr1 = 0xFFFF;
         let result = 0x0000; 
@@ -232,7 +247,7 @@ mod tests {
         let mut registers = Registers::new();
         registers[Register::R1] = sr1;
         // The instruction will have the following encoding:
-        // 0 1 0 1  0 0 0 0  0 1 0 0  0 0 0 0
+        // 0 1 0 1 0 0 0 0 0 1 0 0 0 0 0 0
         let instr = 0x5040;
         let _ = and(instr, &mut registers);
 
@@ -241,18 +256,68 @@ mod tests {
     }
 
     #[test]
-    fn bitwise_not() {
+    /// Test if bitwise 'NOT' actually negates all the bits 
+    /// in a register
+    fn bitwise_not_negates_all_bits() {
         let sr = 0xFFFF;
         let result = 0x0000;
         // Create the registers and set the value on R1
         let mut registers = Registers::new();
         registers[Register::R1] = sr;
         // The instruction will have the following encoding:
-        // 1 0 0 1  0 0 0 0  0 1 1 1  1 1 1 1
+        // 1 0 0 1 0 0 0 0 0 1 1 1 1 1 1 1
         let instr = 0x907F;
         let _ = not(instr, &mut registers);
 
         // Check if in R0 we have the desired result
         assert_eq!(registers[Register::R0], result);
     }
+
+    #[test]
+    /// Test if branch changes the PC for condition
+    /// flag set to positive
+    fn branch_changes_pc_with_pos_cond_flag() {
+        // Create the registers and set the value on register Cond
+        let mut registers = Registers::new();
+        registers[Register::Cond] = CondFlag::Pos.value();
+        // The instruction will have the following encoding:
+        // 0 0 0 0 0 0 1 0 0 0 0 0 0 0 0 1
+        let instr = 0x0201;
+        let _ = branch(instr, &mut registers);
+
+        // Check if the PC register was set to 1
+        assert_eq!(registers[Register::PC], 0x0001);
+    }  
+
+    /// Test if branch changes the PC for condition
+    /// flag set to zero
+    #[test]
+    fn branch_changes_pc_with_zro_cond_flag() {
+        // Create the registers and set the value on register Cond
+        let mut registers = Registers::new();
+        registers[Register::Cond] = CondFlag::Zro.value();
+        // The instruction will have the following encoding:
+        // 0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 1
+        let instr = 0x0401;
+        let _ = branch(instr, &mut registers);
+
+        // Check if the PC register was set to 1
+        assert_eq!(registers[Register::PC], 0x0001);
+    }  
+
+    /// test if branch changes the pc for condition
+    /// flag set to negative
+    #[test]
+    fn branch_changes_pc_with_neg_cond_flag() {
+        // Create the registers and set the value on register Cond
+        let mut registers = Registers::new();
+        registers[Register::Cond] = CondFlag::Neg.value();
+        // The instruction will have the following encoding:
+        // 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0 1
+        let instr = 0x0801;
+        let _ = branch(instr, &mut registers);
+
+        // Check if the PC register was set to 1
+        assert_eq!(registers[Register::PC], 0x0001);
+    }  
 }
