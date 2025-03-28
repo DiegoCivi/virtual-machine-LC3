@@ -110,8 +110,6 @@ impl CondFlag {
 }
 
 /// Registers that are located on the memory
-/// - KBSR = Keyboard status
-/// - KBDR = Keyboard data
 #[derive(Clone, Copy)]
 enum MemoryRegisters {
     KeyboardStatus,
