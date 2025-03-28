@@ -7,7 +7,7 @@ const REGS_COUNT: usize = 10;
 
 /// Abstraction of the memory.
 /// It has 65,536 memory locations.
-struct Memory {
+pub struct Memory {
     inner: [u16; MEMORY_MAX],
 }
 
@@ -158,7 +158,7 @@ impl CondFlag {
 /// - KBSR = Keyboard status
 /// - KBDR = Keyboard data
 #[derive(Clone, Copy)]
-enum MemoryRegisters {
+pub enum MemoryRegisters {
     KeyboardStatus,
     KeyboardData 
 }

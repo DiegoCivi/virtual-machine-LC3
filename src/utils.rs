@@ -1,4 +1,4 @@
-use crate::{error::VMError, hardware::{CondFlag, Register, Registers}};
+use crate::{error::VMError, hardware::{CondFlag, Memory, MemoryRegisters, Register, Registers}};
 
 /// Extends a number represented in 'bit_count' bits into
 /// 16 bits, always taking into account the sign of
@@ -26,5 +26,5 @@ pub fn update_flags(r: Register, regs: &mut Registers) {
 }
 
 pub fn mem_read(address: u16) -> u16 {
-    todo!()
+    todo!();
 }

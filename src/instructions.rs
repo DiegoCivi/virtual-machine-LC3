@@ -15,7 +15,7 @@ pub fn add(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     // Destination register
     let dr: Register = Register::from_u16((instr >> 9) & 0x7)?;
     // First operand
-    let r1: Register = Register::from_u16((instr >> 6) & 0x7)?;
+    let sr1: Register = Register::from_u16((instr >> 6) & 0x7)?;
     // Check the bit 5 to see if we are in immediate mode
     let imm_flag = (instr >> 5) & 0x1;
 
@@ -23,19 +23,19 @@ pub fn add(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
         // Get the 5 bits of the imm5 section (first 5 bits) and sign extend them
         let mut imm5 = instr & 0x1F;
         imm5 = sign_extend(imm5, 5)?;
-        regs[dr] = regs[r1].wrapping_add(imm5);
+        regs[dr] = regs[sr1].wrapping_add(imm5);
     } else {
         // Since the immediate flag was off, we only need the SR2 section (first 3 bits).
         // This section contains the register containing the value to add.
-        let r2 = Register::from_u16(instr & 0x7)?;
-        regs[dr] = regs[r1].wrapping_add(regs[r2]);
+        let sr2 = Register::from_u16(instr & 0x7)?;
+        regs[dr] = regs[sr1].wrapping_add(regs[sr2]);
     }
 
     update_flags(dr, regs);
     Ok(())
 }
 
-/// Load a value from a location in memory into a register
+/// Loads a value from a location in memory into a register
 /// 
 /// ### Arguments
 /// 
@@ -54,6 +54,41 @@ fn load_indirect(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     let value = mem_read(final_address);
     regs[dr] = value;
     update_flags(dr, regs);
+    Ok(())
+}
+
+/// Does the bitwise 'AND' between two values and stores the result
+/// in a register.
+/// 
+/// This instruction can happen in two different ways. One is
+/// by doing it with two elements that are in a register each, 
+/// this is called register mode. The other mode is to use the value
+/// of a register with the one that is embedded in the instruction itself.
+/// 
+/// ### Arguments
+/// 
+/// - `instr`: An u16 that has the encoding of the whole instruction to execute.
+/// - `regs`: A Registers struct that handles each register.
+fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+    // Destination register
+    let dr = Register::from_u16((instr >> 9) & 0x7)?;
+    // SR1 section
+    let sr1 = Register::from_u16((instr >> 6) & 0x1)?;
+    // Imm flag
+    let imm_flag = (instr >> 5) & 0x1;
+    
+    if imm_flag == 1 {
+        // Get the imm5 section, then do the bitwise and with the content on R1.
+        let mut imm5 = instr & 0x1F;
+        imm5 = sign_extend(instr, 5)?;
+        regs[dr] = regs[Register::R1] & imm5;
+    } else {
+        // Get the SR2 section, then do the bitwise and with the content on R1.
+        let sr2 = Register::from_u16(instr & 0x7)?;
+        regs[dr] = regs[sr1] & regs[sr2];
+    }
+
+    update_flags(sr1, regs);
     Ok(())
 }
 
