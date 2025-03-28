@@ -51,12 +51,14 @@ fn load_indirect(instr: u16, regs: &mut Registers) {
 
 #[cfg(test)]
 mod tests {
+    use crate::hardware::CondFlag;
+
     use super::*;
 
     #[test]
-    /// Add two values in register mode. One value will be in
-    /// R1 and the other in R2, while the destination register
-    /// will be R0.
+    /// Test result when adding two values in register mode. 
+    /// One value will be in R1 and the other in R2, while
+    /// the destination register will be R0.
     fn add_with_register_mode() {
         let sr1 = 0x0001;
         let sr2 = 0x0002;
@@ -75,9 +77,10 @@ mod tests {
     }
 
     #[test]
-    /// Add the two values in immediate mode. One value will be
-    /// in R1 and the other will be embedded in the instruction
-    /// encoding, while the destination register will be R0.
+    /// Test result when adding the two values in immediate mode. 
+    /// One value will be in R1 and the other will be embedded in
+    /// the instruction encoding, while the destination 
+    /// register will be R0.
     fn add_with_immediate_mode() {
         let sr1 = 0x0001;
         let result = 0x003; 
@@ -94,8 +97,8 @@ mod tests {
     }
 
     #[test]
-    /// Add one positve value with a negative one. To do this
-    /// adding we need to use immediate mode.
+    /// Test result when adding one positve value with a 
+    /// negative one. To do this adding we need to use immediate mode.
     fn add_with_negative_value() {
         let sr1 = 0x0001;
         let result = 0x000; 
@@ -109,6 +112,42 @@ mod tests {
 
         // Check if in R0 we have the desired result
         assert_eq!(registers[Register::R0], result);
+    }
+
+    #[test]
+    /// Test if the condition flag was set to POS when the
+    /// result of an addition is a positive number.
+    fn add_updates_cond_flag_to_POS() {
+        let sr1 = 0x0001;
+        let sr2 = 0x0002;
+        let result = 0x0003;
+        // Create the registers and set the values on R1 and R2
+        let mut registers = Registers::new();
+        registers[Register::R1] = sr1;
+        registers[Register::R2] = sr2;
+        // The instruction will have the following encoding:
+        // 0 0 0 1 0 0 0 0 0 1 0 0 0 0 1 0
+        let instr = 0x1042;
+        add(instr, &mut registers);
+
+        assert_eq!(registers[Register::COND], CondFlag::POS as u16);
+    }
+
+    #[test]
+    /// Test if the condition flag was set to ZRO when the
+    /// result of an addition is a 0.
+    fn add_updates_cond_flag_to_ZRO() {
+        let sr1 = 0x0001;
+        let result = 0x000; 
+        // Create the registers and set the value on R1
+        let mut registers = Registers::new();
+        registers[Register::R1] = sr1;
+        // The instruction will have the following encoding:
+        // 0 0 0 1 0 0 0 0 0 1 1 1 1 1 1 1
+        let instr = 0x107F;
+        add(instr, &mut registers);
+
+        assert_eq!(registers[Register::COND], CondFlag::ZRO as u16);
     }
 
 }

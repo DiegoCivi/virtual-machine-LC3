@@ -99,6 +99,7 @@ enum OpCode {
 
 /// Condition flags that indicate
 /// the result of the previous calculation
+#[derive(Debug)]
 pub enum CondFlag {
     POS = 1 << 0,
     ZRO = 1 << 1,
