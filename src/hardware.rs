@@ -1,9 +1,13 @@
+use std::ops::{Index, IndexMut};
+
+use crate::error::VMError;
+
 const MEMORY_MAX: usize = 65535;
 const REGS_COUNT: usize = 10;
 
 /// Abstraction of the memory.
 /// It has 65,536 memory locations.
-struct Memory {
+pub struct Memory {
     inner: [u16; MEMORY_MAX],
 }
 
@@ -12,7 +16,8 @@ struct Memory {
 /// - 8 general purpose registers (R0-R7)
 /// - 1 program counter register (PC)
 /// - 1 condition flags register (COND)
-enum Register {
+#[derive(Clone, Copy)]
+pub enum Register {
     R0,
     R1,
     R2,
@@ -22,7 +27,7 @@ enum Register {
     R6,
     R7,
     PC,
-    COND,
+    Cond,
 }
 
 impl Register {
@@ -37,18 +42,58 @@ impl Register {
             Register::R6 => 6,
             Register::R7 => 7,
             Register::PC => 8,
-            Register::COND => 9,
+            Register::Cond => 9,
+        }
+    }
+
+    pub fn from_u16(n: u16) -> Result<Self, VMError> {
+        match n {
+            0 => Ok(Register::R0),
+            1 => Ok(Register::R1),
+            2 => Ok(Register::R2),
+            3 => Ok(Register::R3),
+            4 => Ok(Register::R4),
+            5 => Ok(Register::R5),
+            6 => Ok(Register::R6),
+            7 => Ok(Register::R7),
+            8 => Ok(Register::PC),
+            9 => Ok(Register::Cond),
+            _ => Err(VMError::ConversionError),
         }
     }
 }
 
 /// Abstraction of the registers storage.
-struct Registers {
-    inner: [Register; REGS_COUNT],
+pub struct Registers {
+    inner: [u16; REGS_COUNT],
+}
+
+impl Registers {
+    /// Creates a new instance of Registers with all the values of the registers
+    /// set to 0
+    pub fn new() -> Self {
+        Self { inner: [0; REGS_COUNT] }
+    }
+}
+
+impl Index<Register> for Registers {
+    type Output = u16;
+
+    fn index(&self, reg: Register) -> &Self::Output {
+        let index = reg.index();
+        &self.inner[index]
+    }
+}
+
+impl IndexMut<Register> for Registers {
+    fn index_mut(&mut self, reg: Register) -> &mut Self::Output {
+        let index = reg.index();
+        &mut self.inner[index]
+    }
 }
 
 /// Opcodes that identify an operation
-/// thet the VM supports.
+/// that the VM supports.
 enum OpCode {
     Br,
     Add,
@@ -93,14 +138,14 @@ impl OpCode {
 
 /// Condition flags that indicate
 /// the result of the previous calculation
-enum CondFlag {
+pub enum CondFlag {
     Pos = 1 << 0,
     Zro = 1 << 1,
     Neg = 1 << 2,
 }
 
 impl CondFlag {
-    fn value(&self) -> u16 {
+    pub fn value(&self) -> u16 {
         match self {
             CondFlag::Pos => 1 << 0,
             CondFlag::Zro => 1 << 1,
@@ -111,7 +156,7 @@ impl CondFlag {
 
 /// Registers that are located on the memory
 #[derive(Clone, Copy)]
-enum MemoryRegisters {
+pub enum MemoryRegisters {
     KeyboardStatus,
     KeyboardData 
 }
