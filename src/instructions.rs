@@ -23,7 +23,7 @@ pub fn add(instr: u16, regs: &mut Registers) {
         // Get the 5 bits of the imm5 section (first 5 bits) and sign extend them
         let mut imm5 = instr & 0x1F;
         imm5 = sign_extend(imm5, 5);
-        regs[dr] = regs[r1] + imm5;
+        regs[dr] = regs[r1].wrapping_add(imm5);
     } else {
         // Since the immediate flag was off, we only need the SR2 section (first 3 bits).
         // This section contains the register containing the value to add.
@@ -87,6 +87,24 @@ mod tests {
         // The instruction will have the following encoding:
         // 0 0 0 1 0 0 0 0 0 1 1 0 0 0 1 0
         let instr = 0x1062;
+        add(instr, &mut registers);
+
+        // Check if in R0 we have the desired result
+        assert_eq!(registers[Register::R0], result);
+    }
+
+    #[test]
+    /// Add one positve value with a negative one. To do this
+    /// adding we need to use immediate mode.
+    fn add_with_negative_value() {
+        let sr1 = 0x0001;
+        let result = 0x000; 
+        // Create the registers and set the value on R1
+        let mut registers = Registers::new();
+        registers[Register::R1] = sr1;
+        // The instruction will have the following encoding:
+        // 0 0 0 1 0 0 0 0 0 1 1 1 1 1 1 1
+        let instr = 0x107F;
         add(instr, &mut registers);
 
         // Check if in R0 we have the desired result
