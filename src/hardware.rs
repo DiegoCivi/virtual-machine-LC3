@@ -1,12 +1,16 @@
+<<<<<<< HEAD
 use std::ops::{Index, IndexMut};
 
 const MEMORY_MAX: u16 = u16::MAX;
+=======
+const MEMORY_MAX: usize = 65535;
+>>>>>>> hardware_abstractions
 const REGS_COUNT: usize = 10;
 
 /// Abstraction of the memory.
 /// It has 65,536 memory locations.
 struct Memory {
-    inner: [u16; MEMORY_MAX as usize], // TODO: Check if MEMORY_MAX should be an usize
+    inner: [u16; MEMORY_MAX],
 }
 
 /// Abstraction of a single register.
@@ -79,31 +83,30 @@ impl IndexMut<Register> for Registers {
 /// Opcodes that identify an operation
 /// that the VM supports.
 enum OpCode {
-    BR = 0,
-    ADD = 1,
-    LD = 2,
-    ST = 3,
-    JSR = 4,
-    AND = 5,
-    LDR = 6,
-    STR = 7,
-    RTI = 8,
-    NOT = 9,
-    LDI = 10,
-    STI = 11,
-    JMP = 12,
-    RES = 13,
-    LEA = 14,
-    TRAP = 15,
+    Br = 0,
+    Add = 1,
+    Ld = 2,
+    St = 3,
+    Jsr = 4,
+    And = 5,
+    Ldr = 6,
+    Str = 7,
+    Rti = 8,
+    Not = 9,
+    Ldi = 10,
+    Sti = 11,
+    Jmp = 12,
+    Res = 13,
+    Lea = 14,
+    Trap = 15,
 }
 
 /// Condition flags that indicate
 /// the result of the previous calculation
-#[derive(Debug)]
-pub enum CondFlag {
-    POS = 1 << 0,
-    ZRO = 1 << 1,
-    NEG = 1 << 2,
+enum CondFlag {
+    Pos = 1 << 0,
+    Zro = 1 << 1,
+    Neg = 1 << 2,
 }
 
 /// Registers that are located on the memory
@@ -111,20 +114,29 @@ pub enum CondFlag {
 /// - KBDR = Keyboard data
 #[derive(Clone, Copy)]
 enum MemoryRegisters {
-    KBSR = 0xFE00,
-    KBDR = 0xFE02  
+    KeyboardStatus,
+    KeyboardData 
+}
+
+impl MemoryRegisters {
+    fn address(&self) -> u16 {
+        match self {
+            MemoryRegisters::KeyboardStatus => 0xFE00,
+            MemoryRegisters::KeyboardData => 0xFE02,
+        }
+    }
 }
 
 /// Allows us to compare an u16 with a MemoryRegister
 impl PartialEq<MemoryRegisters> for u16 {
-    fn eq(&self, other: &MemoryRegisters) -> bool {
-        *self == *other as u16
+    fn eq(&self, mem_reg: &MemoryRegisters) -> bool {
+        *self == mem_reg.address()
     }
 }
 
 /// Allows us to compare a MemoryRegister with an u16
 impl PartialEq<u16> for MemoryRegisters {
-    fn eq(&self, other: &u16) -> bool {
-        *self as u16 == *other
+    fn eq(&self, num: &u16) -> bool {
+        self.address() == *num
     }
 }
