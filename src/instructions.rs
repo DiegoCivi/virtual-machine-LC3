@@ -124,7 +124,7 @@ fn branch(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     let cond_flag = (instr >> 9) & 0x7;
     let coincides = cond_flag & regs[Register::Cond];
     if coincides == cond_flag {
-        regs[Register::PC] += pc_offset;
+        regs[Register::PC] = regs[Register::PC].wrapping_add(pc_offset);
     }
     Ok(())
 }
