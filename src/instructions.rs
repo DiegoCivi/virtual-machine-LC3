@@ -136,7 +136,7 @@ mod tests {
         let instr = 0x1042;
         add(instr, &mut registers);
 
-        assert_eq!(registers[Register::COND], CondFlag::POS as u16);
+        assert_eq!(registers[Register::COND], CondFlag::Pos as u16);
     }
 
     #[test]
@@ -153,6 +153,6 @@ mod tests {
         let instr = 0x107F;
         add(instr, &mut registers);
 
-        assert_eq!(registers[Register::COND], CondFlag::ZRO as u16);
+        assert_eq!(registers[Register::COND], CondFlag::Zro as u16);
     }
 }

@@ -1,10 +1,6 @@
-<<<<<<< HEAD
 use std::ops::{Index, IndexMut};
 
-const MEMORY_MAX: u16 = u16::MAX;
-=======
 const MEMORY_MAX: usize = 65535;
->>>>>>> hardware_abstractions
 const REGS_COUNT: usize = 10;
 
 /// Abstraction of the memory.
@@ -103,7 +99,7 @@ enum OpCode {
 
 /// Condition flags that indicate
 /// the result of the previous calculation
-enum CondFlag {
+pub enum CondFlag {
     Pos = 1 << 0,
     Zro = 1 << 1,
     Neg = 1 << 2,

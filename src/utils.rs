@@ -16,11 +16,11 @@ pub fn sign_extend(mut x: u16, bit_count: usize) -> u16 {
 /// It updates the register COND where we have the condition flag
 pub fn update_flags(r: Register, regs: &mut Registers) {
     if regs[r] == 0 {
-        regs[Register::COND] = CondFlag::ZRO as u16;
+        regs[Register::COND] = CondFlag::Zro as u16;
     } else if regs[r] >> 15 == 1 {
-        regs[Register::COND] = CondFlag::NEG as u16;
+        regs[Register::COND] = CondFlag::Neg as u16;
     } else {
-        regs[Register::COND] = CondFlag::POS as u16;
+        regs[Register::COND] = CondFlag::Pos as u16;
     }
 }
 
