@@ -107,9 +107,20 @@ fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     Ok(())
 }
 
+/// Changes the PC register if the Cond register is set to the 
+/// flag that is selected on the encoding of the instruction
+/// 
+/// ### Arguments
+/// 
+/// 
+/// - `instr`: An u16 that has the encoding of the whole instruction to execute.
+/// - `regs`: A Registers struct that handles each register.
 fn branch(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+    // Get the PCOffset9 section
     let mut pc_offset = instr & 0x1FF;
     pc_offset = sign_extend(pc_offset, 9)?;
+    // Get the Condition Flag and check if it is the same
+    // as the one selcted on the instruction
     let cond_flag = (instr >> 9) & 0x7;
     let coincides = cond_flag & regs[Register::Cond];
     if coincides == cond_flag {
