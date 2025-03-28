@@ -106,3 +106,25 @@ pub enum CondFlag {
     NEG = 1 << 2,
 }
 
+/// Registers that are located on the memory
+/// - KBSR = Keyboard status
+/// - KBDR = Keyboard data
+#[derive(Clone, Copy)]
+enum MemoryRegisters {
+    KBSR = 0xFE00,
+    KBDR = 0xFE02  
+}
+
+/// Allows us to compare an u16 with a MemoryRegister
+impl PartialEq<MemoryRegisters> for u16 {
+    fn eq(&self, other: &MemoryRegisters) -> bool {
+        *self == *other as u16
+    }
+}
+
+/// Allows us to compare a MemoryRegister with an u16
+impl PartialEq<u16> for MemoryRegisters {
+    fn eq(&self, other: &u16) -> bool {
+        *self as u16 == *other
+    }
+}
