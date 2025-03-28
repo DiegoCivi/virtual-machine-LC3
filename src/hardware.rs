@@ -1,5 +1,7 @@
 use std::ops::{Index, IndexMut};
 
+use crate::error::VMError;
+
 const MEMORY_MAX: usize = 65535;
 const REGS_COUNT: usize = 10;
 
@@ -25,7 +27,7 @@ pub enum Register {
     R6,
     R7,
     PC,
-    COND,
+    Cond,
 }
 
 impl Register {
@@ -40,26 +42,23 @@ impl Register {
             Register::R6 => 6,
             Register::R7 => 7,
             Register::PC => 8,
-            Register::COND => 9,
+            Register::Cond => 9,
         }
     }
-}
 
-impl From<u16> for Register {
-    /// Allows to transform an u16 into a corresponding Register
-    fn from(value: u16) -> Self {
-        match value {
-            0 => Self::R0,
-            1 => Self::R1,
-            2 => Self::R2,
-            3 => Self::R3,
-            4 => Self::R4,
-            5 => Self::R5,
-            6 => Self::R6,
-            7 => Self::R7,
-            8 => Self::PC,
-            9 => Self::COND,
-            _ => panic!("Value out of bounds"), // TODO: Check how to handle this case
+    pub fn from_u16(n: u16) -> Result<Self, VMError> {
+        match n {
+            0 => Ok(Register::R0),
+            1 => Ok(Register::R1),
+            2 => Ok(Register::R2),
+            3 => Ok(Register::R3),
+            4 => Ok(Register::R4),
+            5 => Ok(Register::R5),
+            6 => Ok(Register::R6),
+            7 => Ok(Register::R7),
+            8 => Ok(Register::PC),
+            9 => Ok(Register::Cond),
+            _ => Err(VMError::ConversionError),
         }
     }
 }
@@ -146,7 +145,7 @@ pub enum CondFlag {
 }
 
 impl CondFlag {
-    fn value(&self) -> u16 {
+    pub fn value(&self) -> u16 {
         match self {
             CondFlag::Pos => 1 << 0,
             CondFlag::Zro => 1 << 1,

@@ -4,6 +4,7 @@ use instructions::add;
 mod hardware;
 mod utils;
 mod instructions;
+mod error;
 
 fn main() {
     let sr1 = 0x0001;
@@ -13,6 +14,6 @@ fn main() {
     // The instruction will have the following encoding:
     // 0 0 0 1 0 0 0 0 0 1 1 0 0 0 1 0
     let instr = 0x1062;
-    add(instr, &mut registers);
+    let _ = add(instr, &mut registers);
 
 }
