@@ -137,6 +137,25 @@ fn jump(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     Ok(())
 }
 
+/// Changes the PC register with the value specified on a register or
+/// in the same instruction encoding. This depends on the long flag
+/// situated in the bit 11. The long flag being set means it can be a value
+/// of eleven bits. If the flags is not set, the value is taken from
+/// a register.
+fn jump_register(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+    let long_flag = (instr >> 11) & 1;
+    regs[Register::R7] = regs[Register::PC];
+    if long_flag == 1 {
+        let mut long_pc_offset = instr & 0x7FF;
+        long_pc_offset = sign_extend(long_pc_offset, 11)?;
+        regs[Register::PC] = regs[Register::PC].wrapping_add(long_pc_offset);
+    } else {
+        let r1 = Register::from_u16((instr >> 6) & 0x7)?;
+        regs[Register::PC] = regs[r1];
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use crate::hardware::CondFlag;
@@ -356,5 +375,86 @@ mod tests {
 
         // Check if the PC was set with the value that R1 had
         assert_eq!(registers[Register::PC], result);
+    }
+
+    #[test]
+    /// Test if the PC register adds the desired value to the PC
+    /// when using the jump register instruction with the long
+    /// flag set. With this flag being set, means we have 11 bits
+    /// to choose a value for our PC register.
+    fn jump_register_adds_pc_with_long_flag() {
+        let mut registers = Registers::new();
+        let result = 0x03FF;
+        // The instruction will have the following encoding:
+        // 0 1 0 0  1 0 1 1  1 1 1 1  1 1 1 1
+        let instr = 0x4BFF;
+        let _ = jump_register(instr, &mut registers);
+
+        // Check if the PC register was set to the value
+        // embedded on the encoding
+        assert_eq!(registers[Register::PC], result);
+    }
+
+    #[test]
+    /// Test if the PC register substracts the desired value to the PC
+    /// when using the jump register instruction with the long
+    /// flag set and a negative value in the PCoffset11 section. 
+    /// With this flag being set, means we have 11 bits
+    /// to choose a value for our PC register.
+    /// 
+    /// In this case we will set the PC to 10 and we will substract 3
+    /// so it sets to 7.
+    fn jump_register_substracts_pc_with_long_flag() {
+        // Create the registers and set the pc to 10
+        let mut registers = Registers::new();
+        registers[Register::PC] = 0x000A;
+        let result = 0x0007;
+        // The instruction will have the following encoding:
+        // 0 1 0 0  1 1 1 1  1 1 1 1  1 1 0 1
+        let instr = 0x4FFD;
+        let _ = jump_register(instr, &mut registers);
+
+        // Check if the PC register was set to the value
+        // embedded on the encoding
+        assert_eq!(registers[Register::PC], result);
+    }
+
+    #[test]
+    /// Test if the PC register changes to the desired value
+    /// when using the jum register instruction without the long
+    /// flag set. This means that the value for the PC register
+    /// will be take from one of the registers.
+    fn jump_register_changes_pc_without_long_flag() {
+        // Create the registers and set the for the PC on R1
+        let mut registers = Registers::new();
+        let result = 0x07FF;
+        registers[Register::R1] = result;
+        // The instruction will have the following encoding:
+        // 0 1 0 0  0 0 0 0  0 1 0 0  0 0 0 0
+        let instr = 0x4040;
+        let _ = jump_register(instr, &mut registers);
+
+        // Check if the PC register was set to the value
+        // embedded on the encoding
+        assert_eq!(registers[Register::PC], result);
+    }
+
+    #[test]
+    /// Test if the jump register instruction stores the PC
+    /// value into the R7 register before it is changed to a
+    /// new value.
+    fn jump_register_stores_pc_on_r7() {
+        // Create the registers and set the value of the PC
+        let result = 0x000A;
+        let mut registers = Registers::new();
+        registers[Register::PC] = result;
+
+        // Check if R7 has a different value before calling the instruction
+        assert_ne!(registers[Register::R7], result);
+        // Run the instruction
+        let _ = jump_register(0x4040, &mut registers);
+        // Check if R7 changed its value to the one the PC had
+        assert_eq!(registers[Register::R7], result);
+
     }
 }
