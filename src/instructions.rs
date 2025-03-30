@@ -151,8 +151,7 @@ fn load_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Resul
     // memory location we need to look at for the final address
     let address_of_final_address = regs[Register::PC].wrapping_add(pc_offset);
     let final_address = mem_read(address_of_final_address, memory)?;
-    let value = mem_read(*final_address, memory)?;
-    regs[dr] = *value;
+    regs[dr] =  mem_read(final_address, memory)?;
     update_flags(dr, regs);
     Ok(())
 }
@@ -166,7 +165,24 @@ fn load(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VME
     pc_offset = sign_extend(pc_offset, 9)?;
     // Calculate the memory address to read
     let address = regs[Register::PC].wrapping_add(pc_offset);
-    regs[dr] = *mem_read(address, memory)?;
+    regs[dr] = mem_read(address, memory)?;
+    update_flags(dr, regs);
+    Ok(())
+}
+
+/// Loads a value that is located in a memory address, formed by the addition 
+/// of the value on a register and in the offset6 section, into a desired register
+fn load_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+    // Destination Register
+    let dr = Register::from_u16((instr >> 9) & 0x7)?;
+    // BaseR section
+    let r1 = Register::from_u16((instr >> 6) & 0x7)?;
+    // Offset6 section
+    let mut offset6 = instr & 0x3F;
+    offset6 = sign_extend(offset6, 6)?;
+    // Calculate the memory address to read
+    let address = regs[r1].wrapping_add(offset6);
+    regs[dr] = mem_read(address, memory)?;
     update_flags(dr, regs);
     Ok(())
 }
@@ -503,13 +519,13 @@ mod tests {
 
     #[test]
     /// Test if load (this time without indirection) instruction changes the 
-    /// value of the desired register to the memory address.
+    /// value of the desired register to the one on a memory address.
     /// 
     /// This time there is no indirection, so we set the pc to 10, add the value
     /// 5 into the PCoffset9 section and with that we get the address where
     /// we will find the value for our register.
     fn load_changes_register_value() {
-        // Create the memory and set the values for the addresses
+        // Create the memory and set the values for the address
         let mut memory = Memory::new();
         let result = 0x0001;
         let _ = memory.set(0x000F, result);
@@ -520,6 +536,31 @@ mod tests {
         // 0 0 1 0  0 0 1 0  0 0 0 0  0 1 0 1
         let instr = 0x2205;
         let _ = load(instr, &mut registers, &mut memory);
+
+        // Check if R1 has the value that was on memory in 'result_address' 
+        assert_eq!(registers[Register::R1], result);
+    }
+    
+    #[test]
+    /// Test if load register instruction changes the value of the desired
+    /// register to the one on a memory address that is formed from the value
+    /// in a register plus the one on the offset6 section.
+    /// 
+    /// Register 0 will have the value 10 while in the offset 6 section we will
+    /// have the value 5. So then in memory address 15 we will have the value
+    /// 1 that will be set to the register 1.
+    fn load_register_changes_register_value() {
+        // Create the memory and set the values for the address
+        let mut memory = Memory::new();
+        let result = 0x0001;
+        let _ = memory.set(0x000F, result);
+        // Create the registers and set the value of pc to 10.
+        let mut registers = Registers::new();
+        registers[Register::R0] = 0x000A;
+        // The instruction will have the following encoding:
+        // 0 1 1 0  0 0 1 0  0 0 0 0  0 1 0 1
+        let instr = 0x6205;
+        let _ = load_register(instr, &mut registers, &mut memory);
 
         // Check if R1 has the value that was on memory in 'result_address' 
         assert_eq!(registers[Register::R1], result);
