@@ -1,4 +1,4 @@
-use crate::{error::VMError, hardware::{Memory, Register, Registers}, memory_access::mem_read, utils::{sign_extend, update_flags}};
+use crate::{error::VMError, hardware::{Memory, Register, Registers}, memory_access::{mem_read, mem_write}, utils::{sign_extend, update_flags}};
 
 /// Adds to values and stores the result in a register
 /// 
@@ -199,6 +199,38 @@ fn load_effective_address(instr: u16, regs: &mut Registers) -> Result<(), VMErro
     regs[dr] = regs[Register::PC].wrapping_add(pc_offset);
     update_flags(dr, regs);
     Ok(())
+}
+
+/// Stores the value that is in a register into an address in memory. This address
+/// is created from the addition of the PC and the PCoffset9 section
+fn store(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+    // Source Register
+    let sr = Register::from_u16((instr >> 9) & 0x7)?;
+    // PCoffset9 section
+    let mut pc_offset = instr & 0x1FF;
+    pc_offset = sign_extend(pc_offset, 9)?;
+    // Calculate the address
+    let address = regs[Register::PC].wrapping_add(pc_offset);
+    let new_val = regs[sr];
+    mem_write(address, new_val, memory)
+}
+
+/// Stores the value that is in a register into an address in memory. This address
+/// is taken indirectly from the instruction. By adding the PC and the PCoffset9 section
+/// we get the first memory address, then if we read it we get the final address. That
+/// final address is the one that is going to get written.
+fn store_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+    // Source Register
+    let sr = Register::from_u16((instr >> 9) & 0x7)?;
+    // PCoffset9 section
+    let mut pc_offset = instr & 0x1FF;
+    pc_offset = sign_extend(pc_offset, 9)?;
+    // Get the first address
+    let first_address = regs[Register::PC].wrapping_add(pc_offset);
+    // Read the first address, get the second one and write on it
+    let final_address = mem_read(first_address, memory)?;
+    let new_val = regs[sr];
+    mem_write(final_address, new_val, memory)
 }
 
 #[cfg(test)]
@@ -597,11 +629,62 @@ mod tests {
         registers[Register::PC] = 0x000A;
         let result: u16 = 0x000A + 0x0005;
         // The instruction will have the following encoding:
-        // 1 1 1 0  0 0 1  0 0 0 0 0 0 1 0 1
+        // 1 1 1 0  0 0 1 0  0 0 0 0  0 1 0 1
         let instr = 0x6205;
         let _ = load_effective_address(instr, &mut registers);
 
         // Check if R1 has the value of PC + PCoffset9
         assert_eq!(registers[Register::R1], result);
+    }
+
+    #[test]
+    /// Test if store instruction changes the value in memory.
+    /// 
+    /// Register 1 will have the value 1, while PC and PCoffset9 section
+    /// will both have the value 5. So memory address = PC + PCoffset9 = 10
+    /// will have the value of register 1
+    fn store_changes_value_in_memory() {
+        let pc_val = 0x0005;
+        let affected_address: u16 = pc_val + 0x0005; // PC + PCoffset9
+        // Create the memory
+        let mut memory = Memory::new();
+        // Create the registers and set the values for R1 and PC
+        let mut registers = Registers::new();
+        registers[Register::PC] = 0x0005;
+        registers[Register::R1] = 0x0001;
+        // The instruction will have the following encoding:
+        // 0 0 1 1  0 0 1 0  0 0 0 0  0 1 0 1
+        let instr = 0x3205;
+        let _ = store(instr, &mut registers, &mut memory);
+
+        // Check if memory[PC + PCoffset9] = registers[R1]
+        assert_eq!(*memory.get(affected_address).unwrap(), registers[Register::R1]);
+    }
+
+    #[test]
+    /// Test if store indirect instruction changes the value in memory.
+    /// 
+    /// Register 1 will have the value 1, address 0x000A will have the value 
+    /// 0x000F, while PC and PCoffset9 section will both have the value 5. 
+    /// So the first memory address = PC + PCoffset9 = 10 = 0x000A. When we
+    /// read that address we will get the final address = 0x000F and thats
+    /// the one that will be written with the value of register 1.
+    fn store_indirect_changes_value_in_memory() {
+        // Create the memory and set the value of the address 0x000A to 0x000F
+        let mut memory = Memory::new();
+        let first_address: u16 = 0x000A;
+        let final_address: u16 = 0x000F;
+        let _ = memory.set(first_address, final_address);
+        // Create the registers and set the values of PC and R1
+        let mut registers = Registers::new();
+        registers[Register::R1] = 0x0001;
+        registers[Register::PC] = 0x0005;
+        // The instruction will have the following encoding:
+        // 1 0 1 1  0 0 1 0  0 0 0 0  0 1 0 1
+        let instr = 0xB205;
+        let _ = store_indirect(instr, &mut registers, &mut memory);
+
+        // Check if 0x000F has the value of register R1
+        assert_eq!(*memory.get(final_address).unwrap(), registers[Register::R1]);
     }
 }
