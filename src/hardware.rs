@@ -16,21 +16,21 @@ impl Memory {
         Self { inner: [0; MEMORY_MAX] }
     }
 
-    pub fn set<T: TryInto<usize>>(&mut self, mem_address: T, new_val: u16) -> Result<(), VMError> {
-        let index: usize = mem_address.try_into().map_err(|_| VMError::ConversionError)?;
+    pub fn set<T: Into<usize>>(&mut self, mem_address: T, new_val: u16) -> Result<(), VMError> {
+        let index: usize = mem_address.into();
         if let Some(val) = self.inner.get_mut(index) {
             *val = new_val;
             return Ok(());
         }
-        Err(VMError::IndexError)
+        Err(VMError::InvalidIndex)
     }
 
-    pub fn get<T: TryInto<usize>>(&mut self, mem_address: T) -> Result<&u16, VMError> {
-        let index = mem_address.try_into().map_err(|_| VMError::ConversionError)?;
+    pub fn get<T: Into<usize>>(&mut self, mem_address: T) -> Result<&u16, VMError> {
+        let index: usize = mem_address.into();
         if let Some(val) = self.inner.get(index) {
             return Ok(val);
         }
-        Err(VMError::IndexError)
+        Err(VMError::InvalidIndex)
     }
 } 
 
@@ -81,7 +81,7 @@ impl Register {
             7 => Ok(Register::R7),
             8 => Ok(Register::PC),
             9 => Ok(Register::Cond),
-            _ => Err(VMError::ConversionError),
+            _ => Err(VMError::Conversion),
         }
     }
 }
@@ -195,11 +195,9 @@ impl MemoryRegister {
     }
 }
 
-impl TryInto<usize> for MemoryRegister {
-    type Error = VMError;
-
-    fn try_into(self) -> Result<usize, Self::Error> {
-        self.address().try_into().map_err(|_| VMError::ConversionError)
+impl From<MemoryRegister> for usize {
+    fn from(value: MemoryRegister) -> Self {
+        value.address().into()
     }
 }
 

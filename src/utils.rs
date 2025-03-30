@@ -7,7 +7,7 @@ use crate::{error::VMError, hardware::{CondFlag, Register, Registers}};
 /// the original number
 pub fn sign_extend(mut x: u16, bit_count: usize) -> Result<u16, VMError> {
     // Get MSB and check if it is a 1
-    let bitcount_sub = bit_count.checked_sub(1).ok_or(VMError::ArithmeticError)?;
+    let bitcount_sub = bit_count.checked_sub(1).ok_or(VMError::Arithmetic)?;
     let msb = (x >> bitcount_sub) & 1; // TODO: Is the '& 1' necessary?
     if msb != 0 {
         // If the MSB is 1 it means it is negative, else its positive
@@ -27,14 +27,20 @@ pub fn update_flags(r: Register, regs: &mut Registers) {
     }
 }
 
+/// Reads one byte from the standard input
 pub fn getchar() -> Result<[u8; 1], VMError> {
     let mut buffer = [0u8; 1];
     let mut stdin = stdin();
 
-    stdin.read_exact(&mut buffer);
+    stdin.read_exact(&mut buffer).map_err(|_| VMError::STDINRead)?;
     Ok(buffer)
 }
 
+/// Checks if there is something to read on the standard input
+/// 
+/// ### Returns
+/// 
+/// A bool indicating where there is something to read or not
 pub fn check_key() -> bool {
     let mut stdin = stdin().bytes().peekable();    
     match stdin.peek() {

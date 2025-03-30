@@ -1,5 +1,6 @@
 pub enum VMError {
-    ArithmeticError,
-    ConversionError,
-    IndexError,
+    Arithmetic,
+    Conversion,
+    InvalidIndex,
+    STDINRead
 }
