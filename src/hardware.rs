@@ -28,7 +28,7 @@ impl Memory {
         }
         Err(VMError::IndexError)
     }
-}
+} 
 
 /// Abstraction of a single register.
 /// We have:

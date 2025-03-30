@@ -1,3 +1,5 @@
+use std::io::{stdin, Read};
+
 use crate::{error::VMError, hardware::{CondFlag, Register, Registers}};
 
 /// Extends a number represented in 'bit_count' bits into
@@ -25,3 +27,23 @@ pub fn update_flags(r: Register, regs: &mut Registers) {
     }
 }
 
+pub fn getchar() -> Result<[u8; 1], VMError> {
+    let mut buffer = [0u8; 1];
+    let mut stdin = stdin();
+
+    stdin.read_exact(&mut buffer);
+    Ok(buffer)
+}
+
+pub fn check_key() -> bool {
+    let mut stdin = stdin().bytes().peekable();    
+    match stdin.peek() {
+        Some(Ok(n)) => {
+                        if *n > 0 {
+                            return true;
+                        }
+                        false
+            },
+        _ => false,
+    }
+}
