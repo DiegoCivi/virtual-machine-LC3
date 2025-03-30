@@ -12,6 +12,10 @@ pub struct Memory {
 }
 
 impl Memory {
+    pub fn new() -> Self {
+        Self { inner: [0; MEMORY_MAX] }
+    }
+
     pub fn set<T: TryInto<usize>>(&mut self, mem_address: T, new_val: u16) -> Result<(), VMError> {
         let index: usize = mem_address.try_into().map_err(|_| VMError::ConversionError)?;
         if let Some(val) = self.inner.get_mut(index) {

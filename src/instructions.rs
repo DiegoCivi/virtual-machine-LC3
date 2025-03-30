@@ -47,7 +47,7 @@ fn load_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Resul
     // PCoffset 9 section
     let mut pc_offset = instr & 0xFF; 
     pc_offset = sign_extend(pc_offset, 9)?;
-    // Add the number that was on PCoffset 9 section to get the 
+    // Add the number that was on PCoffset 9 section to PC to get the 
     // memory location we need to look at for the final address
     let address_of_final_address = regs[Register::PC].wrapping_add(pc_offset);
     let final_address = mem_read(address_of_final_address, memory)?;
@@ -455,6 +455,34 @@ mod tests {
         let _ = jump_register(0x4040, &mut registers);
         // Check if R7 changed its value to the one the PC had
         assert_eq!(registers[Register::R7], result);
+    }
 
+    #[test]
+    /// Test if load indirect instruction changes the value of a register
+    /// with one that was in a place in memory.
+    /// 
+    /// We seted in the PCoffset9 section the value 5 and the PC to 10.
+    /// So when adding this we get the memory address 15 where we
+    /// seted to be the address where the result will be found. This 
+    /// address will be 20, so the instruction reads that memory address
+    /// and loads the value of it to the register indicated on the instruction
+    /// (register 1 in this case)
+    fn load_indirect_changes_register_value() {
+        // Create the memory and set the values for the addresses
+        let mut memory = Memory::new();
+        let result_address = 0x0014;
+        let result = 0x0001;
+        let _ = memory.set(0x000F, result_address);
+        let _ = memory.set(result_address, result);
+        // Create the registers and set the value of pc to 10.
+        let mut registers = Registers::new();
+        registers[Register::PC] = 0x000A;
+        // The instruction will have the following encoding:
+        // 1 0 1 0  0 0 1 0  0 0 0 0  0 1 0 1
+        let instr = 0xA205;
+        let _ = load_indirect(instr, &mut registers, &mut memory);
+
+        // Check if R1 has the value that was on memory in 'result_address' 
+        assert_eq!(registers[Register::R1], result);
     }
 }
