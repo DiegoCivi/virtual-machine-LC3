@@ -515,9 +515,10 @@ mod tests {
     fn load_indirect_changes_register_value() {
         // Create the memory and set the values for the addresses
         let mut memory = Memory::new();
+        let first_address: u16 = 0x000F;
         let result_address = 0x0014;
         let result = 0x0001;
-        let _ = memory.set(0x000F, result_address);
+        let _ = memory.set(first_address, result_address);
         let _ = memory.set(result_address, result);
         // Create the registers and set the value of pc to 10.
         let mut registers = Registers::new();
@@ -542,7 +543,8 @@ mod tests {
         // Create the memory and set the values for the address
         let mut memory = Memory::new();
         let result = 0x0001;
-        let _ = memory.set(0x000F, result);
+        let address: u16 = 0x000F;
+        let _ = memory.set(address, result);
         // Create the registers and set the value of pc to 10.
         let mut registers = Registers::new();
         registers[Register::PC] = 0x000A;
@@ -567,7 +569,8 @@ mod tests {
         // Create the memory and set the values for the address
         let mut memory = Memory::new();
         let result = 0x0001;
-        let _ = memory.set(0x000F, result);
+        let address: u16 = 0x000F;
+        let _ = memory.set(address, result);
         // Create the registers and set the value of pc to 10.
         let mut registers = Registers::new();
         registers[Register::R0] = 0x000A;
