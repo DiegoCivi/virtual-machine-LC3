@@ -233,6 +233,20 @@ fn store_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Resu
     mem_write(final_address, new_val, memory)
 }
 
+fn store_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+    // Source Register
+    let sr = Register::from_u16((instr >> 9) & 0x7)?;
+    // BaseR section
+    let r1 = Register::from_u16((instr >> 6) & 0x7)?;
+    // Offset 6 section
+    let mut offset = instr & 0x3f;
+    offset = sign_extend(offset, 6)?;
+    // Calculate the address
+    let address = regs[r1].wrapping_add(offset);
+    let new_val = regs[sr];
+    mem_write(address, new_val, memory)
+}
+
 #[cfg(test)]
 mod tests {
     use crate::hardware::CondFlag;
@@ -686,5 +700,27 @@ mod tests {
 
         // Check if 0x000F has the value of register R1
         assert_eq!(*memory.get(final_address).unwrap(), registers[Register::R1]);
+    }
+
+    #[test]
+    /// Test if store register instruction changes the value in memory.
+    /// 
+    /// Register 1 will have value 1, register 0 and offset6 section will both 
+    /// have value 5. The address = offset6 + register 0 = 0x000A will be written
+    /// with the value of register 1.
+    fn store_register_changes_value_in_memory() {
+        let mut memory = Memory::new();
+        // Create the registers and set the values of R1 and R0
+        let mut registers = Registers::new();
+        registers[Register::R0] = 0x0005;
+        registers[Register::R1] = 0x0001;
+        // The instruction will have the following encoding:
+        // 0 1 1 1  0 0 1  0 0 0  0 0 0 1 0 1
+        let instr = 0x7205;
+        let _ = store_register(instr, &mut registers, &mut memory);
+
+        // Check if address 0x000A = R0 + offset6 was written with R1's value
+        let affected_address: u16 = 0x000A;
+        assert_eq!(*memory.get(affected_address).unwrap(), registers[Register::R1]);
     }
 }
