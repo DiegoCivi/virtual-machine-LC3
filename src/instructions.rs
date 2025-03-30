@@ -187,6 +187,20 @@ fn load_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Resul
     Ok(())
 }
 
+/// Loads a value created from the addition of the value of the PC and the
+/// one in the PCoffset9 section, into a register
+fn load_effective_address(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+    // Destination Register
+    let dr = Register::from_u16((instr >> 9) & 0x7)?;
+    // PCoffset9 section
+    let mut pc_offset = instr & 0x1FF;
+    pc_offset = sign_extend(pc_offset, 9)?;
+    // Set the new value for the destination register
+    regs[dr] = regs[Register::PC].wrapping_add(pc_offset);
+    update_flags(dr, regs);
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use crate::hardware::CondFlag;
@@ -563,6 +577,28 @@ mod tests {
         let _ = load_register(instr, &mut registers, &mut memory);
 
         // Check if R1 has the value that was on memory in 'result_address' 
+        assert_eq!(registers[Register::R1], result);
+    }
+
+    #[test]
+    /// Test if load effective address instruction changes the 
+    /// value of the desired register to the one that comes from
+    /// the addition of the PC and the PCoffset9 section.
+    /// 
+    /// PC will have the value 10 and PCoffset9 will have the value 5
+    /// so after the call of the instruction, register 1 should
+    /// have the value 15
+    fn load_effective_changes_register_value() {
+        // Create the registers and set the value of pc to 10.
+        let mut registers = Registers::new();
+        registers[Register::PC] = 0x000A;
+        let result: u16 = 0x000A + 0x0005;
+        // The instruction will have the following encoding:
+        // 1 1 1 0  0 0 1  0 0 0 0 0 0 1 0 1
+        let instr = 0x6205;
+        let _ = load_effective_address(instr, &mut registers);
+
+        // Check if R1 has the value of PC + PCoffset9
         assert_eq!(registers[Register::R1], result);
     }
 }
