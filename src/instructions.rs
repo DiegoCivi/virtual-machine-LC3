@@ -1,4 +1,4 @@
-use crate::{error::VMError, hardware::{Register, Registers}, utils::{mem_read, sign_extend, update_flags}};
+use crate::{error::VMError, hardware::{Memory, Register, Registers}, memory_access::mem_read, utils::{sign_extend, update_flags}};
 
 /// Adds to values and stores the result in a register
 /// 
@@ -41,7 +41,7 @@ pub fn add(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 /// 
 /// - `instr`: An u16 that has the encoding of the whole instruction to execute.
 /// - `regs`: A Registers struct that handles each register.
-fn load_indirect(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+fn load_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Destination register
     let dr = Register::from_u16((instr >> 9) & 0x7)?;
     // PCoffset 9 section
@@ -50,9 +50,9 @@ fn load_indirect(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     // Add the number that was on PCoffset 9 section to get the 
     // memory location we need to look at for the final address
     let address_of_final_address = regs[Register::PC].wrapping_add(pc_offset);
-    let final_address = mem_read(address_of_final_address);
-    let value = mem_read(final_address);
-    regs[dr] = value;
+    let final_address = mem_read(address_of_final_address, memory)?;
+    let value = mem_read(*final_address, memory)?;
+    regs[dr] = *value;
     update_flags(dr, regs);
     Ok(())
 }

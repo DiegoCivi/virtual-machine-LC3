@@ -25,6 +25,3 @@ pub fn update_flags(r: Register, regs: &mut Registers) {
     }
 }
 
-pub fn mem_read(address: u16) -> u16 {
-    todo!();
-}

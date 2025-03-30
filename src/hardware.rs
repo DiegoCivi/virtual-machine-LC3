@@ -11,6 +11,25 @@ pub struct Memory {
     inner: [u16; MEMORY_MAX],
 }
 
+impl Memory {
+    pub fn set<T: TryInto<usize>>(&mut self, mem_address: T, new_val: u16) -> Result<(), VMError> {
+        let index: usize = mem_address.try_into().map_err(|_| VMError::ConversionError)?;
+        if let Some(val) = self.inner.get_mut(index) {
+            *val = new_val;
+            return Ok(());
+        }
+        Err(VMError::IndexError)
+    }
+
+    pub fn get<T: TryInto<usize>>(&mut self, mem_address: T) -> Result<&u16, VMError> {
+        let index = mem_address.try_into().map_err(|_| VMError::ConversionError)?;
+        if let Some(val) = self.inner.get(index) {
+            return Ok(val);
+        }
+        Err(VMError::IndexError)
+    }
+}
+
 /// Abstraction of a single register.
 /// We have:
 /// - 8 general purpose registers (R0-R7)
@@ -158,29 +177,37 @@ impl CondFlag {
 /// - KBSR = Keyboard status
 /// - KBDR = Keyboard data
 #[derive(Clone, Copy)]
-pub enum MemoryRegisters {
+pub enum MemoryRegister {
     KeyboardStatus,
     KeyboardData 
 }
 
-impl MemoryRegisters {
+impl MemoryRegister {
     fn address(&self) -> u16 {
         match self {
-            MemoryRegisters::KeyboardStatus => 0xFE00,
-            MemoryRegisters::KeyboardData => 0xFE02,
+            MemoryRegister::KeyboardStatus => 0xFE00,
+            MemoryRegister::KeyboardData => 0xFE02,
         }
     }
 }
 
+impl TryInto<usize> for MemoryRegister {
+    type Error = VMError;
+
+    fn try_into(self) -> Result<usize, Self::Error> {
+        self.address().try_into().map_err(|_| VMError::ConversionError)
+    }
+}
+
 /// Allows us to compare an u16 with a MemoryRegister
-impl PartialEq<MemoryRegisters> for u16 {
-    fn eq(&self, mem_reg: &MemoryRegisters) -> bool {
+impl PartialEq<MemoryRegister> for u16 {
+    fn eq(&self, mem_reg: &MemoryRegister) -> bool {
         *self == mem_reg.address()
     }
 }
 
 /// Allows us to compare a MemoryRegister with an u16
-impl PartialEq<u16> for MemoryRegisters {
+impl PartialEq<u16> for MemoryRegister {
     fn eq(&self, num: &u16) -> bool {
         self.address() == *num
     }
