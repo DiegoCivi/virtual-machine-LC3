@@ -7,6 +7,11 @@ use crate::{error::VMError, hardware::{Memory, MemoryRegister}, utils::{check_ke
 /// 
 /// - `address`: An u16 representing the memory address to read.
 /// - `Memory`: A Mmeory struct that handles the memory in the system
+/// 
+/// ### Returns
+/// 
+/// A Result containing the data in the memory address, or a VMError if
+/// the operation failed
 pub fn mem_read(address: u16, memory: &mut Memory) -> Result<u16, VMError> {
     if address == MemoryRegister::KeyboardStatus {
         if check_key() {
@@ -19,4 +24,18 @@ pub fn mem_read(address: u16, memory: &mut Memory) -> Result<u16, VMError> {
         }
     }
     memory.get(address).copied()
+}
+
+/// Sets a new val the memory address
+/// 
+/// ### Arguments
+/// 
+/// - `address`: An u16 representing the memory address to read.
+/// - `Memory`: A Mmeory struct that handles the memory in the system
+/// 
+/// ### Returns
+/// 
+/// A Result indicating whether the operation failed or not
+pub fn mem_write(address: u16, new_val: u16, memory: &mut Memory) -> Result<(), VMError> {
+    memory.set(address, new_val)
 }
