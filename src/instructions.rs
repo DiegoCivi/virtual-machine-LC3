@@ -233,6 +233,9 @@ fn store_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Resu
     memory.write(final_address, new_val)
 }
 
+/// Stores the value that is in a register into an address in memory. By adding 
+/// the value on the register specified in the BaseR section and the value in the
+/// offset6 section we get the memory address. That address is the one that is going to get written.
 fn store_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Source Register
     let sr = Register::from_u16((instr >> 9) & 0x7)?;
