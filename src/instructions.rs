@@ -4,7 +4,7 @@ use crate::{error::VMError, hardware::{Memory, Register, Registers}, utils::{sig
 /// 
 /// This instruction can happen in two different ways. One is
 /// by adding two elements that are in a register each, this is called
-/// register mode. The other mode is to add the value of a register
+/// register mode. The other mode, known as immediate mode, is to add the value of a register
 /// with the one that is embedded in the instruction itself.
 /// 
 /// ### Arguments
@@ -74,7 +74,7 @@ fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
         // Get the imm5 section, then do the bitwise and with the content on R1.
         let mut imm5 = instr & 0x1F;
         imm5 = sign_extend(imm5, 5)?;
-        regs[dr] = regs[Register::R1] & imm5;
+        regs[dr] = regs[sr1] & imm5;
     } else {
         // Get the SR2 section, then do the bitwise and with the content on R1.
         let sr2 = Register::from_u16(instr & 0x7)?;
