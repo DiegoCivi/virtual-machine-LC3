@@ -1,6 +1,6 @@
-use std::io::{stdin, Read};
+use std::io::{self, stdin, Read, Write};
 
-use crate::{error::VMError, hardware::{CondFlag, Register, Registers}};
+use crate::{error::VMError, hardware::{CondFlag, Memory, Register, Registers}};
 
 /// Extends a number represented in 'bit_count' bits into
 /// 16 bits, always taking into account the sign of
@@ -52,4 +52,20 @@ pub fn check_key() -> bool {
             },
         _ => false,
     }
+}
+
+/// Reads just one memory location and returns it as an u8
+pub fn read_byte(addr: u16, mem: &mut Memory) -> Result<u8, VMError> {
+    let c: u8 = mem.read(addr)?.try_into().map_err(|_| VMError::Conversion)?;
+    Ok(c)
+}
+
+pub fn stdout_flush() -> Result<(), VMError> {
+    io::stdout().flush().map_err(|_| VMError::STDOUTFlush)?;
+    Ok(())
+}
+
+pub fn stdout_write(buffer: &[u8]) -> Result<(), VMError> {
+    io::stdout().write_all(buffer).map_err(|_| VMError::STDOUTWrite)?;
+    Ok(())
 }

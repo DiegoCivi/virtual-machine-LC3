@@ -65,6 +65,7 @@ impl Memory {
         }
         Err(VMError::InvalidIndex)
     }
+
 } 
 
 /// Abstraction of a single register.
