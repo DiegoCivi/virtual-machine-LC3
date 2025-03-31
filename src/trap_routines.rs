@@ -43,7 +43,7 @@ fn puts(regs: &mut Registers, mem: &mut Memory, writer: &mut impl Write) -> Resu
     while c != NULL {
         let char: u8 = c.try_into().map_err(|_| VMError::Conversion)?;
         stdout_write(&[char], writer)?;
-        c_addr += 1;
+        c_addr = c_addr.wrapping_add(1);
         c = mem.read(c_addr)?;
     }
     stdout_flush(writer)?;
@@ -60,7 +60,7 @@ fn puts_p(regs: &mut Registers, mem: &mut Memory, writer: &mut impl Write) -> Re
         if char2 != 0x00 {
             stdout_write(&[char2], writer)?;
         }
-        c_addr += 1;
+        c_addr = c_addr.wrapping_add(1);
         c = mem.read(c_addr)?;
     }
     stdout_flush(writer)?;
