@@ -1,4 +1,4 @@
-use crate::{error::VMError, hardware::{Memory, Register, Registers}, memory_access::{mem_read, mem_write}, utils::{sign_extend, update_flags}};
+use crate::{error::VMError, hardware::{Memory, Register, Registers}, utils::{sign_extend, update_flags}};
 
 /// Adds to values and stores the result in a register
 /// 
@@ -150,8 +150,8 @@ fn load_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Resul
     // Add the number that was on PCoffset 9 section to PC to get the 
     // memory location we need to look at for the final address
     let address_of_final_address = regs[Register::PC].wrapping_add(pc_offset);
-    let final_address = mem_read(address_of_final_address, memory)?;
-    regs[dr] =  mem_read(final_address, memory)?;
+    let final_address = memory.read(address_of_final_address)?;
+    regs[dr] =  memory.read(final_address)?;
     update_flags(dr, regs);
     Ok(())
 }
@@ -165,7 +165,7 @@ fn load(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VME
     pc_offset = sign_extend(pc_offset, 9)?;
     // Calculate the memory address to read
     let address = regs[Register::PC].wrapping_add(pc_offset);
-    regs[dr] = mem_read(address, memory)?;
+    regs[dr] = memory.read(address)?;
     update_flags(dr, regs);
     Ok(())
 }
@@ -182,7 +182,7 @@ fn load_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Resul
     offset6 = sign_extend(offset6, 6)?;
     // Calculate the memory address to read
     let address = regs[r1].wrapping_add(offset6);
-    regs[dr] = mem_read(address, memory)?;
+    regs[dr] = memory.read(address)?;
     update_flags(dr, regs);
     Ok(())
 }
@@ -212,7 +212,7 @@ fn store(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VM
     // Calculate the address
     let address = regs[Register::PC].wrapping_add(pc_offset);
     let new_val = regs[sr];
-    mem_write(address, new_val, memory)
+    memory.write(address, new_val)
 }
 
 /// Stores the value that is in a register into an address in memory. This address
@@ -228,9 +228,9 @@ fn store_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Resu
     // Get the first address
     let first_address = regs[Register::PC].wrapping_add(pc_offset);
     // Read the first address, get the second one and write on it
-    let final_address = mem_read(first_address, memory)?;
+    let final_address = memory.read(first_address)?;
     let new_val = regs[sr];
-    mem_write(final_address, new_val, memory)
+    memory.write(final_address, new_val)
 }
 
 fn store_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
@@ -244,7 +244,7 @@ fn store_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Resu
     // Calculate the address
     let address = regs[r1].wrapping_add(offset);
     let new_val = regs[sr];
-    mem_write(address, new_val, memory)
+    memory.write(address, new_val)
 }
 
 #[cfg(test)]
@@ -564,8 +564,8 @@ mod tests {
         let first_address: u16 = 0x000F;
         let result_address = 0x0014;
         let result = 0x0001;
-        let _ = memory.set(first_address, result_address);
-        let _ = memory.set(result_address, result);
+        let _ = memory.write(first_address, result_address);
+        let _ = memory.write(result_address, result);
         // Create the registers and set the value of pc to 10.
         let mut registers = Registers::new();
         registers[Register::PC] = 0x000A;
@@ -590,7 +590,7 @@ mod tests {
         let mut memory = Memory::new();
         let result = 0x0001;
         let address: u16 = 0x000F;
-        let _ = memory.set(address, result);
+        let _ = memory.write(address, result);
         // Create the registers and set the value of pc to 10.
         let mut registers = Registers::new();
         registers[Register::PC] = 0x000A;
@@ -616,7 +616,7 @@ mod tests {
         let mut memory = Memory::new();
         let result = 0x0001;
         let address: u16 = 0x000F;
-        let _ = memory.set(address, result);
+        let _ = memory.write(address, result);
         // Create the registers and set the value of pc to 10.
         let mut registers = Registers::new();
         registers[Register::R0] = 0x000A;
@@ -672,7 +672,7 @@ mod tests {
         let _ = store(instr, &mut registers, &mut memory);
 
         // Check if memory[PC + PCoffset9] = registers[R1]
-        assert_eq!(*memory.get(affected_address).unwrap(), registers[Register::R1]);
+        assert_eq!(memory.read(affected_address).unwrap(), registers[Register::R1]);
     }
 
     #[test]
@@ -688,7 +688,7 @@ mod tests {
         let mut memory = Memory::new();
         let first_address: u16 = 0x000A;
         let final_address: u16 = 0x000F;
-        let _ = memory.set(first_address, final_address);
+        let _ = memory.write(first_address, final_address);
         // Create the registers and set the values of PC and R1
         let mut registers = Registers::new();
         registers[Register::R1] = 0x0001;
@@ -699,7 +699,7 @@ mod tests {
         let _ = store_indirect(instr, &mut registers, &mut memory);
 
         // Check if 0x000F has the value of register R1
-        assert_eq!(*memory.get(final_address).unwrap(), registers[Register::R1]);
+        assert_eq!(memory.read(final_address).unwrap(), registers[Register::R1]);
     }
 
     #[test]
@@ -721,6 +721,6 @@ mod tests {
 
         // Check if address 0x000A = R0 + offset6 was written with R1's value
         let affected_address: u16 = 0x000A;
-        assert_eq!(*memory.get(affected_address).unwrap(), registers[Register::R1]);
+        assert_eq!(memory.read(affected_address).unwrap(), registers[Register::R1]);
     }
 }

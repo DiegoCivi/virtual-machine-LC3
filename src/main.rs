@@ -5,7 +5,6 @@ mod hardware;
 mod utils;
 mod instructions;
 mod error;
-mod memory_access;
 
 fn main() {
     let sr1 = 0x0001;
