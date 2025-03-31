@@ -4,7 +4,7 @@ use crate::{error::VMError, hardware::{Register, Registers}, utils::{mem_read, s
 /// 
 /// This instruction can happen in two different ways. One is
 /// by adding two elements that are in a register each, this is called
-/// register mode. The other mode is to add the value of a register
+/// register mode. The other mode, known as immediate mode, is to add the value of a register
 /// with the one that is embedded in the instruction itself.
 /// 
 /// ### Arguments
