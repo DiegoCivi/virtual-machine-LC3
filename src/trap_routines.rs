@@ -1,8 +1,7 @@
-use std::{char, io::{self, Write}};
-use crate::{error::VMError, hardware::{Memory, Register, Registers}, utils::{getchar, read_byte, stdout_flush, stdout_write, update_flags}};
-use libc::*;
+use std::{char, fs::read, io::{self, Read, Write}};
+use crate::{error::VMError, hardware::{Memory, Register, Registers}, utils::{getchar, stdout_flush, stdout_write, update_flags}};
 
-const NULL: u8 = 0x000;
+const NULL: u16 = 0x0000;
 
 enum TrapCode {
     GetC = 0x20,
@@ -13,67 +12,65 @@ enum TrapCode {
     Halt = 0x25,
 }
 
-// fn puts(regs: &mut Registers) -> Result<(), VMError> {
-
-// }
-
-fn get_c(regs: &mut Registers) -> Result<(), VMError> {
-    let buffer = getchar()?;
+/// Gets one character from the stdin
+fn get_c(regs: &mut Registers, reader: &mut impl Read) -> Result<(), VMError> {
+    let buffer = getchar(reader)?;
     let char: u16 = buffer[0].into();
     regs[Register::R0] = char;
     update_flags(Register::R0, regs);
     Ok(())
 }
 
-fn trap_out(regs: &mut Registers) -> Result<(), VMError> {
+fn trap_out(regs: &mut Registers, writer: &mut impl Write) -> Result<(), VMError> {
     let c: u8 = regs[Register::R0].try_into().map_err(|_| VMError::Conversion)?;
-    stdout_write(&[c])?;
+    stdout_write(&[c], writer)?;
     Ok(())
 }
 
-fn trap_in(regs: &mut Registers) -> Result<(), VMError> {
+fn trap_in(regs: &mut Registers, writer: &mut impl Write, reader: &mut impl Read) -> Result<(), VMError> {
     print!("Enter a character: ");
-    let buffer = getchar()?;
-    stdout_write(&buffer);
-    stdout_flush()?;
+    let buffer = getchar(reader)?;
+    stdout_write(&buffer, writer)?;
+    stdout_flush(writer)?;
     regs[Register::R0] = buffer[0].try_into().map_err(|_| VMError::Conversion)?;
     update_flags(Register::R0, regs);
     Ok(())
 }
 
-fn puts(regs: &mut Registers, mem: &mut Memory) -> Result<(), VMError> {
+fn puts(regs: &mut Registers, mem: &mut Memory, writer: &mut impl Write) -> Result<(), VMError> {
     let mut c_addr = regs[Register::R0];
-    let mut c = read_byte(c_addr, mem)?;
+    let mut c = mem.read(c_addr)?;
     while c != NULL {
-        stdout_write(&[c])?;
+        let char: u8 = c.try_into().map_err(|_| VMError::Conversion)?;
+        stdout_write(&[char], writer)?;
         c_addr += 1;
-        c = read_byte(c_addr, mem)?;
+        c = mem.read(c_addr)?;
     }
-    stdout_flush()?;
+    stdout_flush(writer)?;
     Ok(())
 }
 
-fn puts_p(regs: &mut Registers, mem: &mut Memory) -> Result<(), VMError> {
+fn puts_p(regs: &mut Registers, mem: &mut Memory, writer: &mut impl Write) -> Result<(), VMError> {
     let mut c_addr = regs[Register::R0];
-    let mut c = read_byte(c_addr, mem)?;
+    let mut c = mem.read(c_addr)?;
     while c != NULL {
-        let char1 = c & 0xFF;
-        stdout_write(&[char1])?;
-        let char2 = c >> 8;
-        if char2 != NULL {
-            stdout_write(&[char2])?;
+        let char1 = (c & 0xFF).try_into().map_err(|_| VMError::Conversion)?;
+        stdout_write(&[char1], writer)?;
+        let char2 = (c >> 8).try_into().map_err(|_| VMError::Conversion)?;
+        if char2 != 0x00 {
+            stdout_write(&[char2], writer)?;
         }
         c_addr += 1;
-        c = read_byte(c_addr, mem)?;
+        c = mem.read(c_addr)?;
     }
-    stdout_flush()?;
+    stdout_flush(writer)?;
     Ok(())
 }
 
-fn halt(mut running: bool) -> Result<(), VMError> {
+fn halt(mut running: bool, writer: &mut impl Write) -> Result<(), VMError> {
     let s = "HALT\n".as_bytes();
-    stdout_write(s)?;
-    stdout_flush()?;
+    stdout_write(s, writer)?;
+    stdout_flush(writer)?;
     running = false;
     Ok(())
 }

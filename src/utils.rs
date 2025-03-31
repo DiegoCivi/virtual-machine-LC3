@@ -28,11 +28,9 @@ pub fn update_flags(r: Register, regs: &mut Registers) {
 }
 
 /// Reads one byte from the standard input
-pub fn getchar() -> Result<[u8; 1], VMError> {
+pub fn getchar(reader: &mut impl Read) -> Result<[u8; 1], VMError> {
     let mut buffer = [0u8; 1];
-    let mut stdin = stdin();
-
-    stdin.read_exact(&mut buffer).map_err(|_| VMError::STDINRead)?;
+    reader.read_exact(&mut buffer).map_err(|_| VMError::STDINRead)?;
     Ok(buffer)
 }
 
@@ -54,18 +52,12 @@ pub fn check_key() -> bool {
     }
 }
 
-/// Reads just one memory location and returns it as an u8
-pub fn read_byte(addr: u16, mem: &mut Memory) -> Result<u8, VMError> {
-    let c: u8 = mem.read(addr)?.try_into().map_err(|_| VMError::Conversion)?;
-    Ok(c)
-}
-
-pub fn stdout_flush() -> Result<(), VMError> {
-    io::stdout().flush().map_err(|_| VMError::STDOUTFlush)?;
+pub fn stdout_flush(writer: &mut impl Write) -> Result<(), VMError> {
+    writer.flush().map_err(|_| VMError::STDOUTFlush)?;
     Ok(())
 }
 
-pub fn stdout_write(buffer: &[u8]) -> Result<(), VMError> {
-    io::stdout().write_all(buffer).map_err(|_| VMError::STDOUTWrite)?;
+pub fn stdout_write(buffer: &[u8], writer: &mut impl Write) -> Result<(), VMError> {
+    writer.write_all(buffer).map_err(|_| VMError::STDOUTWrite)?;
     Ok(())
 }
