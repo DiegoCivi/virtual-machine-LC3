@@ -1,4 +1,7 @@
+#[derive(Debug)]
 pub enum VMError {
-    ArithmeticError,
-    ConversionError,
+    Arithmetic,
+    Conversion,
+    InvalidIndex,
+    STDINRead
 }
