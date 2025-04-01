@@ -41,7 +41,7 @@ pub fn add(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 /// 
 /// - `instr`: An u16 that has the encoding of the whole instruction to execute.
 /// - `regs`: A Registers struct that handles each register.
-fn not(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+pub fn not(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     let dr = Register::from_u16((instr >> 9) & 0x7)?;
     let sr = Register::from_u16((instr >> 6) & 0x7)?;
 
@@ -62,7 +62,7 @@ fn not(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 /// 
 /// - `instr`: An u16 that has the encoding of the whole instruction to execute.
 /// - `regs`: A Registers struct that handles each register.
-fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+pub fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     // Destination register
     let dr = Register::from_u16((instr >> 9) & 0x7)?;
     // SR1 section
@@ -93,7 +93,7 @@ fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 /// 
 /// - `instr`: An u16 that has the encoding of the whole instruction to execute.
 /// - `regs`: A Registers struct that handles each register.
-fn branch(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+pub fn branch(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     // Get the PCOffset9 section
     let mut pc_offset = instr & 0x1FF;
     pc_offset = sign_extend(pc_offset, 9)?;
@@ -108,7 +108,7 @@ fn branch(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 }
 
 /// Changes the PC with the value of a specified register
-fn jump(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+pub fn jump(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     // Get the BaseR section
     let baser_r = Register::from_u16((instr >> 6) & 0x7)?;
     regs[Register::PC] = regs[baser_r];
@@ -120,7 +120,7 @@ fn jump(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 /// situated in the bit 11. The long flag being set means it can be a value
 /// of eleven bits. If the flags is not set, the value is taken from
 /// a register.
-fn jump_register(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+pub fn jump_register(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     let long_flag = (instr >> 11) & 1;
     regs[Register::R7] = regs[Register::PC];
     if long_flag == 1 {
@@ -141,7 +141,7 @@ fn jump_register(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 /// 
 /// - `instr`: An u16 that has the encoding of the whole instruction to execute.
 /// - `regs`: A Registers struct that handles each register.
-fn load_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+pub fn load_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Destination register
     let dr = Register::from_u16((instr >> 9) & 0x7)?;
     // PCoffset 9 section
@@ -157,7 +157,7 @@ fn load_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Resul
 }
 
 /// Loads a value from a location in memory into a register
-fn load(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+pub fn load(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Destination register
     let dr = Register::from_u16((instr >> 9) & 0x7)?;
     // PCoffset 9 section
@@ -172,7 +172,7 @@ fn load(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VME
 
 /// Loads a value that is located in a memory address, formed by the addition 
 /// of the value on a register and in the offset6 section, into a desired register
-fn load_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+pub fn load_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Destination Register
     let dr = Register::from_u16((instr >> 9) & 0x7)?;
     // BaseR section
@@ -189,7 +189,7 @@ fn load_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Resul
 
 /// Loads a value created from the addition of the value of the PC and the
 /// one in the PCoffset9 section, into a register
-fn load_effective_address(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+pub fn load_effective_address(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     // Destination Register
     let dr = Register::from_u16((instr >> 9) & 0x7)?;
     // PCoffset9 section
@@ -203,7 +203,7 @@ fn load_effective_address(instr: u16, regs: &mut Registers) -> Result<(), VMErro
 
 /// Stores the value that is in a register into an address in memory. This address
 /// is created from the addition of the PC and the PCoffset9 section
-fn store(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+pub fn store(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Source Register
     let sr = Register::from_u16((instr >> 9) & 0x7)?;
     // PCoffset9 section
@@ -219,7 +219,7 @@ fn store(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VM
 /// is taken indirectly from the instruction. By adding the PC and the PCoffset9 section
 /// we get the first memory address, then if we read it we get the final address. That
 /// final address is the one that is going to get written.
-fn store_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+pub fn store_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Source Register
     let sr = Register::from_u16((instr >> 9) & 0x7)?;
     // PCoffset9 section
@@ -233,7 +233,7 @@ fn store_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Resu
     mem_write(final_address, new_val, memory)
 }
 
-fn store_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+pub fn store_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Source Register
     let sr = Register::from_u16((instr >> 9) & 0x7)?;
     // BaseR section
