@@ -1,8 +1,10 @@
-use std::io::{Read, Write, stdin};
+use std::{env::Args, fs::File, io::{self, stdin, Read, Write}, mem, os::fd::{AsFd, AsRawFd}};
+
+use termios::ffi::tcsetattr;
 
 use crate::{
     error::VMError,
-    hardware::{CondFlag, Register, Registers},
+    hardware::{CondFlag, Memory, Register, Registers, MEMORY_MAX},
 };
 
 /// Extends a number represented in 'bit_count' bits into
@@ -75,4 +77,67 @@ pub fn stdout_flush(writer: &mut impl Write) -> Result<(), VMError> {
 pub fn stdout_write(buffer: &[u8], writer: &mut impl Write) -> Result<(), VMError> {
     writer.write_all(buffer).map_err(|_| VMError::STDOUTWrite)?;
     Ok(())
+}
+
+pub fn load_arguments(args: Args, mem: &mut Memory) -> Result<(), VMError> {
+    let args_quantiy = args.len();
+    if args_quantiy < 2 {
+        println!("lc3 [image-file1] ...");
+        return Err(VMError::ShellMisuse);
+    }
+
+    for image in args {
+        if let Err(e) = read_image(image.clone(), mem) {
+            println!("failed to load image: {:?}", image);
+            return Err(e);
+        }
+    }
+
+    Ok(())
+}
+
+/// Reads a image and loads it into memory.
+/// 
+/// The first 16 bits of the program file specify the address in memory
+/// where the program should start. This address is called the origin.
+/// After that we find the data that is in bif endian, that is why
+/// after reading it we need to pass it to little endian.
+pub fn read_image(image: String, mem: &mut Memory) -> Result<(), VMError> {
+    let mut file = File::open(image).map_err(|_| VMError::OpenFile)?;
+    // Get the origin from the first 2 bytes and swap it
+    let mut origin_buffer: [u8; 2] = [0; 2]; 
+    file.read_exact(&mut origin_buffer);
+    let mut origin: u16 = join_bytes(origin_buffer[0], origin_buffer[1]); 
+    origin = swap16(origin);
+
+    // Define the maximum read we are capable of
+    let max_read: usize = MEMORY_MAX - origin as usize;
+
+    // Read the whole file into a buffer
+    let mut file_vec_buffer = Vec::with_capacity(max_read);
+    let mut file_buffer = file_vec_buffer.as_mut_slice();
+    file.read_exact(&mut file_buffer);
+
+    // Iter the file content, get the u16 memory locations by adding the
+    // u8 and the swap them so we get the little endian format
+    let mut mem_addr = origin;
+    for chunk in file_buffer.chunks(2) {
+        let joined = join_bytes(chunk[0], chunk[1]);
+        let mem_data = swap16(joined);
+        mem.write(mem_addr, mem_data);
+        mem_addr = mem_addr.wrapping_add(1);
+    }
+
+    Ok(())
+}
+
+fn swap16(num: u16) -> u16 {
+    (num << 8) | (num >> 8)
+}
+
+fn join_bytes(byte1: u8, byte2: u8) -> u16 {
+    let leftmost_byte: u16 = (byte1 << 8).into();
+    let rightmost_byte: u16 = byte2.into();
+    let joined: u16 = leftmost_byte | rightmost_byte;
+    joined
 }

@@ -8,7 +8,7 @@ use crate::{
     utils::{check_key, getchar},
 };
 
-const MEMORY_MAX: usize = 65535;
+pub const MEMORY_MAX: usize = 65535;
 const REGS_COUNT: usize = 10;
 
 /// Abstraction of the memory.

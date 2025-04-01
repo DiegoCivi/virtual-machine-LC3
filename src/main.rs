@@ -1,6 +1,9 @@
+use std::{env, net::Shutdown};
+
 use error::VMError;
 use hardware::{CondFlag, Memory, OpCode, Register, Registers};
 use instructions::*;
+use utils::load_arguments;
 
 mod error;
 mod hardware;
@@ -9,14 +12,16 @@ mod trap_routines;
 mod utils;
 
 fn main() -> Result<(), VMError> {
-    // Load Arguments
-    /* TODO! */
-    // Setup
-    /* TODO! */
-
+    let args = env::args();
     // Hardware creation
     let mut regs = Registers::new();
     let mut mem = Memory::new();
+    // Load Arguments
+    /* TODO! */
+    load_arguments(args, &mut mem)?;
+    // Setup
+    /* TODO! */
+
     // The COND register needs to be initialized at something
     regs[Register::Cond] = CondFlag::Zro.value();
     // Set the PC to the default val
@@ -47,5 +52,7 @@ fn main() -> Result<(), VMError> {
         }
     }
 
+    // Shutdown
+    /* TODO! */
     Ok(())
 }
