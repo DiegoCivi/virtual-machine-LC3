@@ -44,10 +44,8 @@ fn main() -> Result<(), VMError> {
             OpCode::Jmp => jump(instr, &mut regs)?,
             OpCode::Lea => load_effective_address(instr, &mut regs)?,
             //OpCode::Trap => trap(instr, &mut regs)?,
-             
         }
-    } 
+    }
 
     Ok(())
-
 }

@@ -177,12 +177,12 @@ pub enum OpCode {
     Jmp = 0x1100,
     // Res, Unused op code
     Lea = 0x1110,
-   // Trap = 0x1111,
+    // Trap = 0x1111,
 }
 
 impl TryFrom<u16> for OpCode {
     type Error = VMError;
-    
+
     fn try_from(value: u16) -> Result<Self, Self::Error> {
         match value {
             0x0000 => Ok(OpCode::Br),

@@ -223,7 +223,11 @@ pub fn store(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<()
 /// is taken indirectly from the instruction. By adding the PC and the PCoffset9 section
 /// we get the first memory address, then if we read it we get the final address. That
 /// final address is the one that is going to get written.
-pub fn store_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+pub fn store_indirect(
+    instr: u16,
+    regs: &mut Registers,
+    memory: &mut Memory,
+) -> Result<(), VMError> {
     // Source Register
     let sr = Register::from_u16((instr >> 9) & 0x7)?;
     // PCoffset9 section
@@ -240,7 +244,11 @@ pub fn store_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> 
 /// Stores the value that is in a register into an address in memory. By adding
 /// the value on the register specified in the BaseR section and the value in the
 /// offset6 section we get the memory address. That address is the one that is going to get written.
-pub fn store_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+pub fn store_register(
+    instr: u16,
+    regs: &mut Registers,
+    memory: &mut Memory,
+) -> Result<(), VMError> {
     // Source Register
     let sr = Register::from_u16((instr >> 9) & 0x7)?;
     // BaseR section
