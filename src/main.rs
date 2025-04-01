@@ -1,8 +1,8 @@
 use error::VMError;
 use hardware::{CondFlag, Memory, OpCode, Register, Registers};
 use instructions::*;
-use std::env;
-use utils::{load_arguments, setup};
+use std::{env, net::Shutdown};
+use utils::{load_arguments, setup, shutdown};
 
 mod error;
 mod hardware;
@@ -51,6 +51,6 @@ fn main() -> Result<(), VMError> {
     }
 
     // Shutdown
-    /* TODO! */
+    shutdown()?;
     Ok(())
 }

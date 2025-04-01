@@ -180,3 +180,7 @@ fn disable_input_buffering() -> Result<(), VMError> {
     tcsetattr(fd, TCSANOW, &termios).map_err(|_| VMError::TermiosAttrSet)?;
     Ok(())
 }
+
+pub fn shutdown() -> Result<(), VMError> {
+    restore_input_buffering()
+}
