@@ -177,7 +177,7 @@ pub enum OpCode {
     Jmp = 0x1100,
     // Res, Unused op code
     Lea = 0x1110,
-    // Trap = 0x1111,
+    Trap = 0x1111,
 }
 
 impl TryFrom<u16> for OpCode {
@@ -198,7 +198,7 @@ impl TryFrom<u16> for OpCode {
             0x1011 => Ok(OpCode::Sti),
             0x1100 => Ok(OpCode::Jmp),
             0x1110 => Ok(OpCode::Lea),
-            //0x1111 => Ok(OpCode::Trap),
+            0x1111 => Ok(OpCode::Trap),
             _ => Err(VMError::Conversion),
         }
     }

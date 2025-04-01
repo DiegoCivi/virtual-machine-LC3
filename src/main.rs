@@ -22,8 +22,8 @@ fn main() -> Result<(), VMError> {
     // Set the PC to the default val
     regs[Register::PC] = 0x3000;
 
-    let running = true;
-    while running {
+    let mut running_flag = true;
+    while running_flag {
         // Get the instruction to execute
         let instr_addr = regs[Register::PC].wrapping_add(1);
         let instr = mem.read(instr_addr)?;
@@ -43,7 +43,7 @@ fn main() -> Result<(), VMError> {
             OpCode::Sti => store_indirect(instr, &mut regs, &mut mem)?,
             OpCode::Jmp => jump(instr, &mut regs)?,
             OpCode::Lea => load_effective_address(instr, &mut regs)?,
-            //OpCode::Trap => trap(instr, &mut regs)?,
+            OpCode::Trap => trap(instr, &mut regs, &mut mem, &mut running_flag)?,
         }
     }
 
