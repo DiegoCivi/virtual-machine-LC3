@@ -1,7 +1,6 @@
 use error::VMError;
 use hardware::{CondFlag, Memory, OpCode, Register, Registers};
 use instructions::*;
-use memory_access::mem_read;
 
 mod error;
 mod hardware;
@@ -27,7 +26,7 @@ fn main() -> Result<(), VMError> {
     while running {
         // Get the instruction to execute
         let instr_addr = regs[Register::PC].wrapping_add(1);
-        let instr = mem_read(instr_addr, &mut mem)?;
+        let instr = mem.read(instr_addr)?;
         let op_code = OpCode::try_from(instr >> 12)?;
 
         match op_code {
