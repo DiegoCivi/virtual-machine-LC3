@@ -1,7 +1,10 @@
 use std::io::{stdin, stdout};
 
 use crate::{
-    error::VMError, hardware::{Memory, Register, Registers}, trap_routines::{get_c, halt, out, puts, puts_p, trap_in, TrapCode}, utils::{sign_extend, update_flags}
+    error::VMError,
+    hardware::{Memory, Register, Registers},
+    trap_routines::{TrapCode, get_c, halt, out, puts, puts_p, trap_in},
+    utils::{sign_extend, update_flags},
 };
 
 /// Adds to values and stores the result in a register
@@ -262,7 +265,12 @@ pub fn store_register(
     memory.write(address, new_val)
 }
 
-pub fn trap(instr: u16, regs: &mut Registers, mem: &mut Memory, running_flag: &mut bool) -> Result<(), VMError> {
+pub fn trap(
+    instr: u16,
+    regs: &mut Registers,
+    mem: &mut Memory,
+    running_flag: &mut bool,
+) -> Result<(), VMError> {
     regs[Register::R7] = regs[Register::PC];
     let trap_code = TrapCode::try_from(instr & 0xFF)?;
     let mut std_in = stdin();

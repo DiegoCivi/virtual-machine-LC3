@@ -1,8 +1,8 @@
-use std::io::{self, Read, Write, stdin};
+use std::io::{Read, Write, stdin};
 
 use crate::{
     error::VMError,
-    hardware::{CondFlag, Memory, Register, Registers},
+    hardware::{CondFlag, Register, Registers},
 };
 
 /// Extends a number represented in 'bit_count' bits into

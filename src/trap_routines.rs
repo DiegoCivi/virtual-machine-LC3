@@ -3,11 +3,7 @@ use crate::{
     hardware::{Memory, Register, Registers},
     utils::{getchar, stdout_flush, stdout_write, update_flags},
 };
-use std::{
-    char,
-    fs::read,
-    io::{self, Read, Write},
-};
+use std::io::{Read, Write};
 
 const NULL: u16 = 0x0000;
 
@@ -72,7 +68,11 @@ pub fn trap_in(
 /// Output a null-terminated string. The characters are contained in consecutive memory locations,
 /// one character per memory location, starting with the address specified in R0. Writing
 /// terminates with the occurrence of x0000 in a memory location.
-pub fn puts(regs: &mut Registers, mem: &mut Memory, writer: &mut impl Write) -> Result<(), VMError> {
+pub fn puts(
+    regs: &mut Registers,
+    mem: &mut Memory,
+    writer: &mut impl Write,
+) -> Result<(), VMError> {
     // Get the address of the first character and read it
     let mut c_addr = regs[Register::R0];
     let mut c = mem.read(c_addr)?;
@@ -90,7 +90,11 @@ pub fn puts(regs: &mut Registers, mem: &mut Memory, writer: &mut impl Write) -> 
 /// Output a null-terminated string. The characters are contained in consecutive memory locations,
 /// but this time there are two characters per memory location, starting with the address specified in R0. Writing
 /// terminates with the occurrence of x0000 in a memory location.
-pub fn puts_p(regs: &mut Registers, mem: &mut Memory, writer: &mut impl Write) -> Result<(), VMError> {
+pub fn puts_p(
+    regs: &mut Registers,
+    mem: &mut Memory,
+    writer: &mut impl Write,
+) -> Result<(), VMError> {
     // Get the address of the first characters and read them
     let mut c_addr = regs[Register::R0];
     let mut c = mem.read(c_addr)?;
