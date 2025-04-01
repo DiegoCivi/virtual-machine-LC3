@@ -102,14 +102,19 @@ pub fn load_arguments(args: Args, mem: &mut Memory) -> Result<(), VMError> {
     Ok(())
 }
 
+fn read_image(image_path: String, mem: &mut Memory) -> Result<(), VMError> {
+    let mut file = File::open(image_path).map_err(|_| VMError::OpenFile)?;
+    read_image_file(&mut file, mem)?;
+    Ok(())
+}
+
 /// Reads a image and loads it into memory.
 ///
 /// The first 16 bits of the program file specify the address in memory
 /// where the program should start. This address is called the origin.
 /// After that we find the data that is in bif endian, that is why
 /// after reading it we need to pass it to little endian.
-pub fn read_image(image: String, mem: &mut Memory) -> Result<(), VMError> {
-    let mut file = File::open(image).map_err(|_| VMError::OpenFile)?;
+pub fn read_image_file(file: &mut File, mem: &mut Memory) -> Result<(), VMError> {
     // Get the origin from the first 2 bytes and swap it
     let mut origin_buffer: [u8; 2] = [0; 2];
     file.read_exact(&mut origin_buffer)
@@ -135,11 +140,6 @@ pub fn read_image(image: String, mem: &mut Memory) -> Result<(), VMError> {
     }
 
     Ok(())
-}
-
-/// Makes a
-fn swap16(num: u16) -> u16 {
-    (num << 8) | (num >> 8)
 }
 
 fn join_bytes(byte1: u16, byte2: u16) -> u16 {
