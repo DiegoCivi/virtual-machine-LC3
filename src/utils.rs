@@ -114,12 +114,10 @@ pub fn read_image(image: String, mem: &mut Memory) -> Result<(), VMError> {
     let mut origin_buffer: [u8; 2] = [0; 2];
     file.read_exact(&mut origin_buffer)
         .map_err(|_| VMError::ReadFile)?;
-    let mut origin: u16 = join_bytes(origin_buffer[0].into(), origin_buffer[1].into());
-    origin = swap16(origin);
+    let origin: usize = join_bytes(origin_buffer[1].into(), origin_buffer[0].into()).into();
 
     // Define the maximum read we are capable of
-    let usize_origin: usize = origin.into();
-    let max_read: usize = MEMORY_MAX.saturating_sub(usize_origin);
+    let max_read: usize = MEMORY_MAX.saturating_sub(origin);
 
     // Read the whole file into a buffer
     let mut file_vec_buffer = Vec::with_capacity(max_read);
@@ -131,8 +129,7 @@ pub fn read_image(image: String, mem: &mut Memory) -> Result<(), VMError> {
     // u8 and the swap them so we get the little endian format
     let mut mem_addr = origin;
     for chunk in file_buffer.chunks(2) {
-        let joined = join_bytes(chunk[0].into(), chunk[1].into());
-        let mem_data = swap16(joined);
+        let mem_data = join_bytes(chunk[1].into(), chunk[0].into());
         mem.write(mem_addr, mem_data)?;
         mem_addr = mem_addr.wrapping_add(1);
     }
@@ -140,6 +137,7 @@ pub fn read_image(image: String, mem: &mut Memory) -> Result<(), VMError> {
     Ok(())
 }
 
+/// Makes a 
 fn swap16(num: u16) -> u16 {
     (num << 8) | (num >> 8)
 }
