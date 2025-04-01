@@ -85,6 +85,8 @@ pub fn stdout_write(buffer: &[u8], writer: &mut impl Write) -> Result<(), VMErro
     Ok(())
 }
 
+/// Receives the user's args where the path to the executable will be found.
+/// From there it starts to load the instructions into memory.
 pub fn load_arguments(args: Args, mem: &mut Memory) -> Result<(), VMError> {
     let args_quantiy = args.len();
     if args_quantiy < 2 {
@@ -102,6 +104,7 @@ pub fn load_arguments(args: Args, mem: &mut Memory) -> Result<(), VMError> {
     Ok(())
 }
 
+/// Opens a file and reads its content into the memory
 fn read_image(image_path: String, mem: &mut Memory) -> Result<(), VMError> {
     let mut file = File::open(image_path).map_err(|_| VMError::OpenFile)?;
     read_image_file(&mut file, mem)?;
@@ -142,6 +145,7 @@ pub fn read_image_file(file: &mut File, mem: &mut Memory) -> Result<(), VMError>
     Ok(())
 }
 
+/// Receives two bytes and joins them so as to get an u16
 fn join_bytes(byte1: u16, byte2: u16) -> u16 {
     let leftmost_byte: u16 = byte1 << 8;
     let rightmost_byte: u16 = byte2.into();
