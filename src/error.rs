@@ -9,4 +9,7 @@ pub enum VMError {
     ShellMisuse,
     OpenFile,
     ReadFile,
+    SetHandler,
+    TermiosCreation,
+    TermiosAttrSet,
 }

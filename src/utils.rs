@@ -2,11 +2,10 @@ use std::{
     env::Args,
     fs::File,
     io::{self, Read, Write, stdin},
-    mem,
-    os::fd::{AsFd, AsRawFd},
+    os::fd::AsRawFd,
 };
 
-use termios::ffi::tcsetattr;
+use termios::{ECHO, ICANON, TCSANOW, Termios, tcsetattr};
 
 use crate::{
     error::VMError,
@@ -115,7 +114,7 @@ fn read_image(image_path: String, mem: &mut Memory) -> Result<(), VMError> {
 ///
 /// The first 16 bits of the program file specify the address in memory
 /// where the program should start. This address is called the origin.
-/// After that we find the data that is in bif endian, that is why
+/// After that we find the data that is in big endian, that is why
 /// after reading it we need to pass it to little endian.
 pub fn read_image_file(file: &mut File, mem: &mut Memory) -> Result<(), VMError> {
     // Get the origin from the first 2 bytes and swap it
@@ -129,8 +128,8 @@ pub fn read_image_file(file: &mut File, mem: &mut Memory) -> Result<(), VMError>
 
     // Read the whole file into a buffer
     let mut file_vec_buffer = Vec::with_capacity(max_read);
-    let mut file_buffer = file_vec_buffer.as_mut_slice();
-    file.read_exact(&mut file_buffer)
+    let file_buffer = file_vec_buffer.as_mut_slice();
+    file.read_exact(file_buffer)
         .map_err(|_| VMError::ReadFile)?;
 
     // Iter the file content, get the u16 memory locations by adding the
@@ -147,8 +146,37 @@ pub fn read_image_file(file: &mut File, mem: &mut Memory) -> Result<(), VMError>
 
 /// Receives two bytes and joins them so as to get an u16
 fn join_bytes(byte1: u16, byte2: u16) -> u16 {
-    let leftmost_byte: u16 = byte1 << 8;
-    let rightmost_byte: u16 = byte2.into();
-    let joined: u16 = leftmost_byte | rightmost_byte;
+    let joined: u16 = (byte1 << 8) | byte2;
     joined
+}
+
+pub fn setup() -> Result<(), VMError> {
+    ctrlc::set_handler(move || {
+        let _ = handle_interrupt();
+    })
+    .map_err(|_| VMError::SetHandler)?;
+    disable_input_buffering()?;
+    Ok(())
+}
+
+fn handle_interrupt() -> Result<(), VMError> {
+    restore_input_buffering()?;
+    println!();
+    Ok(())
+}
+
+fn restore_input_buffering() -> Result<(), VMError> {
+    let fd = io::stdin().as_raw_fd();
+    let termios = Termios::from_fd(fd).map_err(|_| VMError::TermiosCreation)?;
+    tcsetattr(fd, TCSANOW, &termios).map_err(|_| VMError::TermiosAttrSet)?;
+    Ok(())
+}
+
+fn disable_input_buffering() -> Result<(), VMError> {
+    let fd = io::stdin().as_raw_fd();
+    let mut termios = Termios::from_fd(fd).map_err(|_| VMError::TermiosCreation)?;
+    tcsetattr(fd, TCSANOW, &termios).map_err(|_| VMError::TermiosAttrSet)?;
+    termios.c_cflag &= !ICANON & !ECHO;
+    tcsetattr(fd, TCSANOW, &termios).map_err(|_| VMError::TermiosAttrSet)?;
+    Ok(())
 }

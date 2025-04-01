@@ -1,9 +1,8 @@
-use std::{env, net::Shutdown};
-
 use error::VMError;
 use hardware::{CondFlag, Memory, OpCode, Register, Registers};
 use instructions::*;
-use utils::load_arguments;
+use std::env;
+use utils::{load_arguments, setup};
 
 mod error;
 mod hardware;
@@ -17,10 +16,9 @@ fn main() -> Result<(), VMError> {
     let mut regs = Registers::new();
     let mut mem = Memory::new();
     // Load Arguments
-    /* TODO! */
     load_arguments(args, &mut mem)?;
     // Setup
-    /* TODO! */
+    setup()?;
 
     // The COND register needs to be initialized at something
     regs[Register::Cond] = CondFlag::Zro.value();
