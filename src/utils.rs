@@ -137,7 +137,7 @@ pub fn read_image(image: String, mem: &mut Memory) -> Result<(), VMError> {
     Ok(())
 }
 
-/// Makes a 
+/// Makes a
 fn swap16(num: u16) -> u16 {
     (num << 8) | (num >> 8)
 }
