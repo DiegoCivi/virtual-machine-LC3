@@ -162,22 +162,22 @@ impl IndexMut<Register> for Registers {
 /// Opcodes that identify an operation
 /// that the VM supports.
 pub enum OpCode {
-    Br = 0x0000,
-    Add = 0x0001,
-    Ld = 0x0010,
-    St = 0x0011,
-    Jsr = 0x0100,
-    And = 0x0101,
-    Ldr = 0x0110,
-    Str = 0x0111,
+    Br,
+    Add,
+    Ld,
+    St,
+    Jsr,
+    And,
+    Ldr,
+    Str,
     // Rti, Unused op code
-    Not = 0x1001,
-    Ldi = 0x1010,
-    Sti = 0x1011,
-    Jmp = 0x1100,
+    Not,
+    Ldi,
+    Sti,
+    Jmp,
     // Res, Unused op code
-    Lea = 0x1110,
-    Trap = 0x1111,
+    Lea,
+    Trap,
 }
 
 impl TryFrom<u16> for OpCode {
