@@ -1,12 +1,10 @@
 use hardware::{Register, Registers};
 use instructions::add;
 
-mod hardware;
-mod utils;
-mod instructions;
 mod error;
+mod hardware;
+mod instructions;
 mod trap_routines;
+mod utils;
 
-fn main() {
-
-}
+fn main() {}
