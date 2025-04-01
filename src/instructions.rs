@@ -1,14 +1,18 @@
-use crate::{error::VMError, hardware::{Memory, Register, Registers}, utils::{sign_extend, update_flags}};
+use crate::{
+    error::VMError,
+    hardware::{Memory, Register, Registers},
+    utils::{sign_extend, update_flags},
+};
 
 /// Adds to values and stores the result in a register
-/// 
+///
 /// This instruction can happen in two different ways. One is
 /// by adding two elements that are in a register each, this is called
 /// register mode. The other mode, known as immediate mode, is to add the value of a register
 /// with the one that is embedded in the instruction itself.
-/// 
+///
 /// ### Arguments
-/// 
+///
 /// - `instr`: An u16 that has the encoding of the whole instruction to execute.
 /// - `regs`: A Registers struct that handles each register.
 pub fn add(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
@@ -36,9 +40,9 @@ pub fn add(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 }
 
 /// Does the bitwise 'NOT' for a value stored in a register.
-/// 
+///
 /// ### Arguments
-/// 
+///
 /// - `instr`: An u16 that has the encoding of the whole instruction to execute.
 /// - `regs`: A Registers struct that handles each register.
 fn not(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
@@ -52,14 +56,14 @@ fn not(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 
 /// Does the bitwise 'AND' between two values and stores the result
 /// in a register.
-/// 
+///
 /// This instruction can happen in two different ways. One is
-/// by doing it with two elements that are in a register each, 
+/// by doing it with two elements that are in a register each,
 /// this is called register mode. The other mode is to use the value
 /// of a register with the one that is embedded in the instruction itself.
-/// 
+///
 /// ### Arguments
-/// 
+///
 /// - `instr`: An u16 that has the encoding of the whole instruction to execute.
 /// - `regs`: A Registers struct that handles each register.
 fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
@@ -69,7 +73,7 @@ fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     let sr1 = Register::from_u16((instr >> 6) & 0x1)?;
     // Imm flag
     let imm_flag = (instr >> 5) & 0x1;
-    
+
     if imm_flag == 1 {
         // Get the imm5 section, then do the bitwise and with the content on R1.
         let mut imm5 = instr & 0x1F;
@@ -85,12 +89,12 @@ fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     Ok(())
 }
 
-/// Changes the PC register if the Cond register is set to the 
+/// Changes the PC register if the Cond register is set to the
 /// flag that is selected on the encoding of the instruction
-/// 
+///
 /// ### Arguments
-/// 
-/// 
+///
+///
 /// - `instr`: An u16 that has the encoding of the whole instruction to execute.
 /// - `regs`: A Registers struct that handles each register.
 fn branch(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
@@ -134,24 +138,24 @@ fn jump_register(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     Ok(())
 }
 
-/// Loads a value from a location in memory that is pointed by another memory 
+/// Loads a value from a location in memory that is pointed by another memory
 /// location, into a register
-/// 
+///
 /// ### Arguments
-/// 
+///
 /// - `instr`: An u16 that has the encoding of the whole instruction to execute.
 /// - `regs`: A Registers struct that handles each register.
 fn load_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Destination register
     let dr = Register::from_u16((instr >> 9) & 0x7)?;
     // PCoffset 9 section
-    let mut pc_offset = instr & 0x1FF; 
+    let mut pc_offset = instr & 0x1FF;
     pc_offset = sign_extend(pc_offset, 9)?;
-    // Add the number that was on PCoffset 9 section to PC to get the 
+    // Add the number that was on PCoffset 9 section to PC to get the
     // memory location we need to look at for the final address
     let address_of_final_address = regs[Register::PC].wrapping_add(pc_offset);
     let final_address = memory.read(address_of_final_address)?;
-    regs[dr] =  memory.read(final_address)?;
+    regs[dr] = memory.read(final_address)?;
     update_flags(dr, regs);
     Ok(())
 }
@@ -161,7 +165,7 @@ fn load(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VME
     // Destination register
     let dr = Register::from_u16((instr >> 9) & 0x7)?;
     // PCoffset 9 section
-    let mut pc_offset = instr & 0x1FF; 
+    let mut pc_offset = instr & 0x1FF;
     pc_offset = sign_extend(pc_offset, 9)?;
     // Calculate the memory address to read
     let address = regs[Register::PC].wrapping_add(pc_offset);
@@ -170,7 +174,7 @@ fn load(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VME
     Ok(())
 }
 
-/// Loads a value that is located in a memory address, formed by the addition 
+/// Loads a value that is located in a memory address, formed by the addition
 /// of the value on a register and in the offset6 section, into a desired register
 fn load_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Destination Register
@@ -233,7 +237,7 @@ fn store_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Resu
     memory.write(final_address, new_val)
 }
 
-/// Stores the value that is in a register into an address in memory. By adding 
+/// Stores the value that is in a register into an address in memory. By adding
 /// the value on the register specified in the BaseR section and the value in the
 /// offset6 section we get the memory address. That address is the one that is going to get written.
 fn store_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
@@ -257,7 +261,7 @@ mod tests {
     use super::*;
 
     #[test]
-    /// Test result when adding two values in register mode. 
+    /// Test result when adding two values in register mode.
     /// One value will be in R1 and the other in R2, while
     /// the destination register will be R0.
     fn add_with_register_mode() {
@@ -278,13 +282,13 @@ mod tests {
     }
 
     #[test]
-    /// Test result when adding the two values in immediate mode. 
+    /// Test result when adding the two values in immediate mode.
     /// One value will be in R1 and the other will be embedded in
-    /// the instruction encoding, while the destination 
+    /// the instruction encoding, while the destination
     /// register will be R0.
     fn add_with_immediate_mode() {
         let sr1 = 0x0001;
-        let result = 0x003; 
+        let result = 0x003;
         // Create the registers and set the value on R1
         let mut registers = Registers::new();
         registers[Register::R1] = sr1;
@@ -298,11 +302,11 @@ mod tests {
     }
 
     #[test]
-    /// Test result when adding one positve value with a 
+    /// Test result when adding one positve value with a
     /// negative one. To do this adding we need to use immediate mode.
     fn add_with_negative_value() {
         let sr1 = 0x0001;
-        let result = 0x000; 
+        let result = 0x000;
         // Create the registers and set the value on R1
         let mut registers = Registers::new();
         registers[Register::R1] = sr1;
@@ -374,7 +378,7 @@ mod tests {
     /// gets the correct result
     fn and_with_immediate_mode() {
         let sr1 = 0xFFFF;
-        let result = 0x0000; 
+        let result = 0x0000;
         // Create the registers and set the value on R1
         let mut registers = Registers::new();
         registers[Register::R1] = sr1;
@@ -388,7 +392,7 @@ mod tests {
     }
 
     #[test]
-    /// Test if bitwise 'NOT' actually negates all the bits 
+    /// Test if bitwise 'NOT' actually negates all the bits
     /// in a register
     fn bitwise_not_negates_all_bits() {
         let sr = 0xFFFF;
@@ -419,7 +423,7 @@ mod tests {
 
         // Check if the PC register was set to 1
         assert_eq!(registers[Register::PC], 0x0001);
-    }  
+    }
 
     #[test]
     /// Test if branch changes the PC for condition
@@ -435,7 +439,7 @@ mod tests {
 
         // Check if the PC register was set to 1
         assert_eq!(registers[Register::PC], 0x0001);
-    }  
+    }
 
     #[test]
     /// Test if branch changes the PC for condition
@@ -492,10 +496,10 @@ mod tests {
     #[test]
     /// Test if the PC register substracts the desired value to the PC
     /// when using the jump register instruction with the long
-    /// flag set and a negative value in the PCoffset11 section. 
+    /// flag set and a negative value in the PCoffset11 section.
     /// With this flag being set, means we have 11 bits
     /// to choose a value for our PC register.
-    /// 
+    ///
     /// In this case we will set the PC to 10 and we will substract 3
     /// so it sets to 7.
     fn jump_register_substracts_pc_with_long_flag() {
@@ -554,10 +558,10 @@ mod tests {
     #[test]
     /// Test if load indirect instruction changes the value of a register
     /// with one that was in a place in memory.
-    /// 
+    ///
     /// We seted in the PCoffset9 section the value 5 and the PC to 10.
     /// So when adding this we get the memory address 15 where we
-    /// seted to be the address where the result will be found. This 
+    /// seted to be the address where the result will be found. This
     /// address will be 20, so the instruction reads that memory address
     /// and loads the value of it to the register indicated on the instruction
     /// (register 1 in this case)
@@ -577,14 +581,14 @@ mod tests {
         let instr = 0xA205;
         let _ = load_indirect(instr, &mut registers, &mut memory);
 
-        // Check if R1 has the value that was on memory in 'result_address' 
+        // Check if R1 has the value that was on memory in 'result_address'
         assert_eq!(registers[Register::R1], result);
     }
 
     #[test]
-    /// Test if load (this time without indirection) instruction changes the 
+    /// Test if load (this time without indirection) instruction changes the
     /// value of the desired register to the one on a memory address.
-    /// 
+    ///
     /// This time there is no indirection, so we set the pc to 10, add the value
     /// 5 into the PCoffset9 section and with that we get the address where
     /// we will find the value for our register.
@@ -602,15 +606,15 @@ mod tests {
         let instr = 0x2205;
         let _ = load(instr, &mut registers, &mut memory);
 
-        // Check if R1 has the value that was on memory in 'result_address' 
+        // Check if R1 has the value that was on memory in 'result_address'
         assert_eq!(registers[Register::R1], result);
     }
-    
+
     #[test]
     /// Test if load register instruction changes the value of the desired
     /// register to the one on a memory address that is formed from the value
     /// in a register plus the one on the offset6 section.
-    /// 
+    ///
     /// Register 0 will have the value 10 while in the offset 6 section we will
     /// have the value 5. So then in memory address 15 we will have the value
     /// 1 that will be set to the register 1.
@@ -628,15 +632,15 @@ mod tests {
         let instr = 0x6205;
         let _ = load_register(instr, &mut registers, &mut memory);
 
-        // Check if R1 has the value that was on memory in 'result_address' 
+        // Check if R1 has the value that was on memory in 'result_address'
         assert_eq!(registers[Register::R1], result);
     }
 
     #[test]
-    /// Test if load effective address instruction changes the 
+    /// Test if load effective address instruction changes the
     /// value of the desired register to the one that comes from
     /// the addition of the PC and the PCoffset9 section.
-    /// 
+    ///
     /// PC will have the value 10 and PCoffset9 will have the value 5
     /// so after the call of the instruction, register 1 should
     /// have the value 15
@@ -656,7 +660,7 @@ mod tests {
 
     #[test]
     /// Test if store instruction changes the value in memory.
-    /// 
+    ///
     /// Register 1 will have the value 1, while PC and PCoffset9 section
     /// will both have the value 5. So memory address = PC + PCoffset9 = 10
     /// will have the value of register 1
@@ -675,14 +679,17 @@ mod tests {
         let _ = store(instr, &mut registers, &mut memory);
 
         // Check if memory[PC + PCoffset9] = registers[R1]
-        assert_eq!(memory.read(affected_address).unwrap(), registers[Register::R1]);
+        assert_eq!(
+            memory.read(affected_address).unwrap(),
+            registers[Register::R1]
+        );
     }
 
     #[test]
     /// Test if store indirect instruction changes the value in memory.
-    /// 
-    /// Register 1 will have the value 1, address 0x000A will have the value 
-    /// 0x000F, while PC and PCoffset9 section will both have the value 5. 
+    ///
+    /// Register 1 will have the value 1, address 0x000A will have the value
+    /// 0x000F, while PC and PCoffset9 section will both have the value 5.
     /// So the first memory address = PC + PCoffset9 = 10 = 0x000A. When we
     /// read that address we will get the final address = 0x000F and thats
     /// the one that will be written with the value of register 1.
@@ -707,8 +714,8 @@ mod tests {
 
     #[test]
     /// Test if store register instruction changes the value in memory.
-    /// 
-    /// Register 1 will have value 1, register 0 and offset6 section will both 
+    ///
+    /// Register 1 will have value 1, register 0 and offset6 section will both
     /// have value 5. The address = offset6 + register 0 = 0x000A will be written
     /// with the value of register 1.
     fn store_register_changes_value_in_memory() {
@@ -724,6 +731,9 @@ mod tests {
 
         // Check if address 0x000A = R0 + offset6 was written with R1's value
         let affected_address: u16 = 0x000A;
-        assert_eq!(memory.read(affected_address).unwrap(), registers[Register::R1]);
+        assert_eq!(
+            memory.read(affected_address).unwrap(),
+            registers[Register::R1]
+        );
     }
 }

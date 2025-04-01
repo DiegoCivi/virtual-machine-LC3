@@ -1,5 +1,13 @@
-use std::{char, fs::read, io::{self, Read, Write}};
-use crate::{error::VMError, hardware::{Memory, Register, Registers}, utils::{getchar, stdout_flush, stdout_write, update_flags}};
+use crate::{
+    error::VMError,
+    hardware::{Memory, Register, Registers},
+    utils::{getchar, stdout_flush, stdout_write, update_flags},
+};
+use std::{
+    char,
+    fs::read,
+    io::{self, Read, Write},
+};
 
 const NULL: u16 = 0x0000;
 
@@ -23,24 +31,30 @@ fn get_c(regs: &mut Registers, reader: &mut impl Read) -> Result<(), VMError> {
 
 /// Output a single character.
 fn out(regs: &mut Registers, writer: &mut impl Write) -> Result<(), VMError> {
-    let c: u8 = regs[Register::R0].try_into().map_err(|_| VMError::Conversion)?;
+    let c: u8 = regs[Register::R0]
+        .try_into()
+        .map_err(|_| VMError::Conversion)?;
     stdout_write(&[c], writer)?;
     Ok(())
 }
 
 /// Prompt for input character from the user.
-fn trap_in(regs: &mut Registers, writer: &mut impl Write, reader: &mut impl Read) -> Result<(), VMError> {
+fn trap_in(
+    regs: &mut Registers,
+    writer: &mut impl Write,
+    reader: &mut impl Read,
+) -> Result<(), VMError> {
     print!("Enter a character: ");
     let buffer = getchar(reader)?;
     stdout_write(&buffer, writer)?;
     stdout_flush(writer)?;
-    regs[Register::R0] = buffer[0].try_into().map_err(|_| VMError::Conversion)?;
+    regs[Register::R0] = buffer[0].into();
     update_flags(Register::R0, regs);
     Ok(())
 }
 
-/// Output a null-terminated string. The characters are contained in consecutive memory locations, 
-/// one character per memory location, starting with the address specified in R0. Writing 
+/// Output a null-terminated string. The characters are contained in consecutive memory locations,
+/// one character per memory location, starting with the address specified in R0. Writing
 /// terminates with the occurrence of x0000 in a memory location.
 fn puts(regs: &mut Registers, mem: &mut Memory, writer: &mut impl Write) -> Result<(), VMError> {
     // Get the address of the first character and read it
@@ -57,8 +71,8 @@ fn puts(regs: &mut Registers, mem: &mut Memory, writer: &mut impl Write) -> Resu
     Ok(())
 }
 
-/// Output a null-terminated string. The characters are contained in consecutive memory locations, 
-/// but this time there are two characters per memory location, starting with the address specified in R0. Writing 
+/// Output a null-terminated string. The characters are contained in consecutive memory locations,
+/// but this time there are two characters per memory location, starting with the address specified in R0. Writing
 /// terminates with the occurrence of x0000 in a memory location.
 fn puts_p(regs: &mut Registers, mem: &mut Memory, writer: &mut impl Write) -> Result<(), VMError> {
     // Get the address of the first characters and read them
@@ -212,9 +226,8 @@ mod tests {
         let mut mem = Memory::new();
         let _ = mem.write(starting_address, memory_location1);
         let _ = mem.write(starting_address + 1, memory_location2);
-    
-        let _ = puts_p(&mut regs, &mut mem, &mut writer);
 
+        let _ = puts_p(&mut regs, &mut mem, &mut writer);
 
         let written_val_1: u16 = writer[0].into();
         let written_val_2: u16 = writer[1].into();

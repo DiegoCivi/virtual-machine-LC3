@@ -1,6 +1,12 @@
-use std::{io::stdin, ops::{Index, IndexMut}};
+use std::{
+    io::stdin,
+    ops::{Index, IndexMut},
+};
 
-use crate::{error::VMError, utils::{check_key, getchar}};
+use crate::{
+    error::VMError,
+    utils::{check_key, getchar},
+};
 
 const MEMORY_MAX: usize = 65535;
 const REGS_COUNT: usize = 10;
@@ -13,18 +19,20 @@ pub struct Memory {
 
 impl Memory {
     pub fn new() -> Self {
-        Self { inner: [0; MEMORY_MAX] }
+        Self {
+            inner: [0; MEMORY_MAX],
+        }
     }
 
     /// Sets a new val the memory address
-    /// 
+    ///
     /// ### Arguments
-    /// 
+    ///
     /// - `address`: An u16 representing the memory address to read.
     /// - `Memory`: A Mmeory struct that handles the memory in the system
-    /// 
+    ///
     /// ### Returns
-    /// 
+    ///
     /// A Result indicating whether the operation failed or not
     pub fn write<T: Into<usize>>(&mut self, mem_address: T, new_val: u16) -> Result<(), VMError> {
         let index: usize = mem_address.into();
@@ -37,14 +45,14 @@ impl Memory {
 
     /// Reads a memory address. Also checks whether a key was pressed and it
     /// that case it stores which key was pressed.
-    /// 
+    ///
     /// ### Arguments
-    /// 
+    ///
     /// - `address`: An u16 representing the memory address to read.
     /// - `Memory`: A Mmeory struct that handles the memory in the system
-    /// 
+    ///
     /// ### Returns
-    /// 
+    ///
     /// A Result containing the data in the memory address, or a VMError if
     /// the operation failed
     pub fn read(&mut self, addr: u16) -> Result<u16, VMError> {
@@ -66,8 +74,7 @@ impl Memory {
         }
         Err(VMError::InvalidIndex)
     }
-
-} 
+}
 
 /// Abstraction of a single register.
 /// We have:
@@ -130,7 +137,9 @@ impl Registers {
     /// Creates a new instance of Registers with all the values of the registers
     /// set to 0
     pub fn new() -> Self {
-        Self { inner: [0; REGS_COUNT] }
+        Self {
+            inner: [0; REGS_COUNT],
+        }
     }
 }
 
@@ -216,7 +225,7 @@ impl CondFlag {
 #[derive(Clone, Copy)]
 pub enum MemoryRegister {
     KeyboardStatus,
-    KeyboardData 
+    KeyboardData,
 }
 
 impl MemoryRegister {
