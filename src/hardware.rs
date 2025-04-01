@@ -1,6 +1,12 @@
-use std::ops::{Index, IndexMut};
+use std::{
+    io::stdin,
+    ops::{Index, IndexMut},
+};
 
-use crate::error::VMError;
+use crate::{
+    error::VMError,
+    utils::{check_key, getchar},
+};
 
 const MEMORY_MAX: usize = 65535;
 const REGS_COUNT: usize = 10;
@@ -13,10 +19,22 @@ pub struct Memory {
 
 impl Memory {
     pub fn new() -> Self {
-        Self { inner: [0; MEMORY_MAX] }
+        Self {
+            inner: [0; MEMORY_MAX],
+        }
     }
 
-    pub fn set<T: Into<usize>>(&mut self, mem_address: T, new_val: u16) -> Result<(), VMError> {
+    /// Sets a new val the memory address
+    ///
+    /// ### Arguments
+    ///
+    /// - `address`: An u16 representing the memory address to read.
+    /// - `Memory`: A Mmeory struct that handles the memory in the system
+    ///
+    /// ### Returns
+    ///
+    /// A Result indicating whether the operation failed or not
+    pub fn write<T: Into<usize>>(&mut self, mem_address: T, new_val: u16) -> Result<(), VMError> {
         let index: usize = mem_address.into();
         if let Some(val) = self.inner.get_mut(index) {
             *val = new_val;
@@ -25,14 +43,38 @@ impl Memory {
         Err(VMError::InvalidIndex)
     }
 
-    pub fn get<T: Into<usize>>(&mut self, mem_address: T) -> Result<&u16, VMError> {
-        let index: usize = mem_address.into();
+    /// Reads a memory address. Also checks whether a key was pressed and it
+    /// that case it stores which key was pressed.
+    ///
+    /// ### Arguments
+    ///
+    /// - `address`: An u16 representing the memory address to read.
+    /// - `Memory`: A Mmeory struct that handles the memory in the system
+    ///
+    /// ### Returns
+    ///
+    /// A Result containing the data in the memory address, or a VMError if
+    /// the operation failed
+    pub fn read(&mut self, addr: u16) -> Result<u16, VMError> {
+        if addr == MemoryRegister::KeyboardStatus {
+            if check_key() {
+                self.write(MemoryRegister::KeyboardStatus, 1 << 15)?;
+                let mut reader = stdin();
+                let buffer = getchar(&mut reader)?;
+                let char: u16 = buffer[0].into();
+                self.write(MemoryRegister::KeyboardData, char)?;
+            } else {
+                self.write(MemoryRegister::KeyboardStatus, 0)?;
+            }
+        }
+        // Get the value
+        let index: usize = addr.into();
         if let Some(val) = self.inner.get(index) {
-            return Ok(val);
+            return Ok(*val);
         }
         Err(VMError::InvalidIndex)
     }
-} 
+}
 
 /// Abstraction of a single register.
 /// We have:
@@ -95,7 +137,9 @@ impl Registers {
     /// Creates a new instance of Registers with all the values of the registers
     /// set to 0
     pub fn new() -> Self {
-        Self { inner: [0; REGS_COUNT] }
+        Self {
+            inner: [0; REGS_COUNT],
+        }
     }
 }
 
@@ -179,12 +223,10 @@ impl CondFlag {
 }
 
 /// Registers that are located on the memory
-/// - KBSR = Keyboard status
-/// - KBDR = Keyboard data
 #[derive(Clone, Copy)]
 pub enum MemoryRegister {
     KeyboardStatus,
-    KeyboardData 
+    KeyboardData,
 }
 
 impl MemoryRegister {

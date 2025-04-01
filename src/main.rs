@@ -3,11 +3,11 @@ use hardware::{CondFlag, Memory, OpCode, Register, Registers};
 use instructions::*;
 use memory_access::mem_read;
 
-mod hardware;
-mod utils;
-mod instructions;
 mod error;
-mod memory_access;
+mod hardware;
+mod instructions;
+mod trap_routines;
+mod utils;
 
 fn main() -> Result<(), VMError> {
     // Load Arguments

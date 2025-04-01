@@ -3,5 +3,7 @@ pub enum VMError {
     Arithmetic,
     Conversion,
     InvalidIndex,
-    STDINRead
+    STDINRead,
+    STDOUTWrite,
+    STDOUTFlush,
 }
