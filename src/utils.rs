@@ -1,6 +1,6 @@
-use std::io::{stdin, Read};
+use std::io::{self, stdin, Read, Write};
 
-use crate::{error::VMError, hardware::{CondFlag, Register, Registers}};
+use crate::{error::VMError, hardware::{CondFlag, Memory, Register, Registers}};
 
 /// Extends a number represented in 'bit_count' bits into
 /// 16 bits, always taking into account the sign of
@@ -28,11 +28,9 @@ pub fn update_flags(r: Register, regs: &mut Registers) {
 }
 
 /// Reads one byte from the standard input
-pub fn getchar() -> Result<[u8; 1], VMError> {
+pub fn getchar(reader: &mut impl Read) -> Result<[u8; 1], VMError> {
     let mut buffer = [0u8; 1];
-    let mut stdin = stdin();
-
-    stdin.read_exact(&mut buffer).map_err(|_| VMError::STDINRead)?;
+    reader.read_exact(&mut buffer).map_err(|_| VMError::STDINRead)?;
     Ok(buffer)
 }
 
@@ -52,4 +50,24 @@ pub fn check_key() -> bool {
             },
         _ => false,
     }
+}
+
+/// Flushes the writer
+/// 
+/// ### Returns
+/// 
+/// A Result indicating if the flushing succeded or not
+pub fn stdout_flush(writer: &mut impl Write) -> Result<(), VMError> {
+    writer.flush().map_err(|_| VMError::STDOUTFlush)?;
+    Ok(())
+}
+
+/// Writes the buffer into the writer
+/// 
+/// ### Returns
+/// 
+/// A Result indicating if the writting succeded or not
+pub fn stdout_write(buffer: &[u8], writer: &mut impl Write) -> Result<(), VMError> {
+    writer.write_all(buffer).map_err(|_| VMError::STDOUTWrite)?;
+    Ok(())
 }

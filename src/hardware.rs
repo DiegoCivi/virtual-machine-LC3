@@ -1,4 +1,4 @@
-use std::ops::{Index, IndexMut};
+use std::{io::stdin, ops::{Index, IndexMut}};
 
 use crate::{error::VMError, utils::{check_key, getchar}};
 
@@ -51,7 +51,8 @@ impl Memory {
         if addr == MemoryRegister::KeyboardStatus {
             if check_key() {
                 self.write(MemoryRegister::KeyboardStatus, 1 << 15)?;
-                let buffer = getchar()?;
+                let mut reader = stdin();
+                let buffer = getchar(&mut reader)?;
                 let char: u16 = buffer[0].into();
                 self.write(MemoryRegister::KeyboardData, char)?;
             } else {
@@ -65,6 +66,7 @@ impl Memory {
         }
         Err(VMError::InvalidIndex)
     }
+
 } 
 
 /// Abstraction of a single register.
