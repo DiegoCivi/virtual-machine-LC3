@@ -12,7 +12,7 @@ enum TrapCode {
     Halt = 0x25,
 }
 
-/// Gets one character from the stdin
+/// Read one character from the stdin.
 fn get_c(regs: &mut Registers, reader: &mut impl Read) -> Result<(), VMError> {
     let buffer = getchar(reader)?;
     let char: u16 = buffer[0].into();
@@ -21,12 +21,14 @@ fn get_c(regs: &mut Registers, reader: &mut impl Read) -> Result<(), VMError> {
     Ok(())
 }
 
-fn trap_out(regs: &mut Registers, writer: &mut impl Write) -> Result<(), VMError> {
+/// Output a single character.
+fn out(regs: &mut Registers, writer: &mut impl Write) -> Result<(), VMError> {
     let c: u8 = regs[Register::R0].try_into().map_err(|_| VMError::Conversion)?;
     stdout_write(&[c], writer)?;
     Ok(())
 }
 
+/// Prompt for input character from the user.
 fn trap_in(regs: &mut Registers, writer: &mut impl Write, reader: &mut impl Read) -> Result<(), VMError> {
     print!("Enter a character: ");
     let buffer = getchar(reader)?;
@@ -37,10 +39,15 @@ fn trap_in(regs: &mut Registers, writer: &mut impl Write, reader: &mut impl Read
     Ok(())
 }
 
+/// Output a null-terminated string. The characters are contained in consecutive memory locations, 
+/// one character per memory location, starting with the address specified in R0. Writing 
+/// terminates with the occurrence of x0000 in a memory location.
 fn puts(regs: &mut Registers, mem: &mut Memory, writer: &mut impl Write) -> Result<(), VMError> {
+    // Get the address of the first character and read it
     let mut c_addr = regs[Register::R0];
     let mut c = mem.read(c_addr)?;
     while c != NULL {
+        // Parse it into a u8, write it and pass to the next memory location
         let char: u8 = c.try_into().map_err(|_| VMError::Conversion)?;
         stdout_write(&[char], writer)?;
         c_addr = c_addr.wrapping_add(1);
@@ -50,27 +57,36 @@ fn puts(regs: &mut Registers, mem: &mut Memory, writer: &mut impl Write) -> Resu
     Ok(())
 }
 
+/// Output a null-terminated string. The characters are contained in consecutive memory locations, 
+/// but this time there are two characters per memory location, starting with the address specified in R0. Writing 
+/// terminates with the occurrence of x0000 in a memory location.
 fn puts_p(regs: &mut Registers, mem: &mut Memory, writer: &mut impl Write) -> Result<(), VMError> {
+    // Get the address of the first characters and read them
     let mut c_addr = regs[Register::R0];
     let mut c = mem.read(c_addr)?;
     while c != NULL {
+        // Get the first character in the memory location (the 8 leftmost bits)
         let char1 = (c & 0xFF).try_into().map_err(|_| VMError::Conversion)?;
         stdout_write(&[char1], writer)?;
+        // Get the second character in the same memory location (the 8 rightmost bits)
         let char2 = (c >> 8).try_into().map_err(|_| VMError::Conversion)?;
         if char2 != 0x00 {
             stdout_write(&[char2], writer)?;
         }
         c_addr = c_addr.wrapping_add(1);
+        // Get the next memory location
         c = mem.read(c_addr)?;
     }
     stdout_flush(writer)?;
     Ok(())
 }
 
+/// Halt program
 fn halt(running: &mut bool, writer: &mut impl Write) -> Result<(), VMError> {
     let s = "HALT\n".as_bytes();
     stdout_write(s, writer)?;
     stdout_flush(writer)?;
+    // Change the flag so the main loop stops
     *running = false;
     Ok(())
 }
@@ -101,7 +117,7 @@ mod tests {
         let mut writer: Vec<u8> = Vec::new();
         let mut regs = Registers::new();
         regs[Register::R0] = char_bytes;
-        let _ = trap_out(&mut regs, &mut writer);
+        let _ = out(&mut regs, &mut writer);
 
         let written_val: u16 = writer[0].into();
         assert_eq!(written_val, char_bytes);

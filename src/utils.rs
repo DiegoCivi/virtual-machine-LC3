@@ -52,11 +52,21 @@ pub fn check_key() -> bool {
     }
 }
 
+/// Flushes the writer
+/// 
+/// ### Returns
+/// 
+/// A Result indicating if the flushing succeded or not
 pub fn stdout_flush(writer: &mut impl Write) -> Result<(), VMError> {
     writer.flush().map_err(|_| VMError::STDOUTFlush)?;
     Ok(())
 }
 
+/// Writes the buffer into the writer
+/// 
+/// ### Returns
+/// 
+/// A Result indicating if the writting succeded or not
 pub fn stdout_write(buffer: &[u8], writer: &mut impl Write) -> Result<(), VMError> {
     writer.write_all(buffer).map_err(|_| VMError::STDOUTWrite)?;
     Ok(())
