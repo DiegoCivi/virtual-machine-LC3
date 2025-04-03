@@ -31,11 +31,13 @@ pub fn add(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
         let mut imm5 = instr & 0x1F;
         imm5 = sign_extend(imm5, 5)?;
         regs[dr] = regs[sr1].wrapping_add(imm5);
+        println!("En el registro [{:?}] escribo el valor [{:?}]", dr, regs[sr1].wrapping_add(imm5));
     } else {
         // Since the immediate flag was off, we only need the SR2 section (first 3 bits).
         // This section contains the register containing the value to add.
         let sr2 = Register::from_u16(instr & 0x7)?;
         regs[dr] = regs[sr1].wrapping_add(regs[sr2]);
+        println!("En el registro [{:?}] escribo el valor [{:?}]", dr, regs[sr1].wrapping_add(regs[sr2]));
     }
 
     update_flags(dr, regs);
@@ -173,6 +175,8 @@ pub fn load(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(),
     // Calculate the memory address to read
     let address = regs[Register::PC].wrapping_add(pc_offset);
     regs[dr] = memory.read(address)?;
+    println!("DR: {:?}   offset: {:?}   adress: {:?}   value: {:?}", dr, pc_offset, address, memory.read(address).unwrap());
+    println!("En el registro [{:?}] se guardo el valor [{:?}]", dr, memory.read(address));
     update_flags(dr, regs);
     Ok(())
 }
@@ -189,6 +193,7 @@ pub fn load_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> R
     offset6 = sign_extend(offset6, 6)?;
     // Calculate the memory address to read
     let address = regs[r1].wrapping_add(offset6);
+    println!("En registro {:?} se cargo la address {:?}", dr, memory.read(address)?);
     regs[dr] = memory.read(address)?;
     update_flags(dr, regs);
     Ok(())
@@ -203,6 +208,7 @@ pub fn load_effective_address(instr: u16, regs: &mut Registers) -> Result<(), VM
     let mut pc_offset = instr & 0x1FF;
     pc_offset = sign_extend(pc_offset, 9)?;
     // Set the new value for the destination register
+    println!("En el registro [{:?}] pongo el valor [{:?}]", dr, regs[Register::PC].wrapping_add(pc_offset));
     regs[dr] = regs[Register::PC].wrapping_add(pc_offset);
     update_flags(dr, regs);
     Ok(())
@@ -262,6 +268,7 @@ pub fn store_register(
     // Calculate the address
     let address = regs[r1].wrapping_add(offset);
     let new_val = regs[sr];
+    println!("En la address [{:?}] escribo el valor [{:?}]", address, new_val);
     memory.write(address, new_val)
 }
 
@@ -272,10 +279,12 @@ pub fn trap(
     running_flag: &mut bool,
 ) -> Result<(), VMError> {
     regs[Register::R7] = regs[Register::PC];
+    println!("la instr es: {:x}", instr);
+    println!("El trap code es: {:x}", instr & 0xFF);
     let trap_code = TrapCode::try_from(instr & 0xFF)?;
     let mut std_in = stdin();
     let mut std_out = stdout();
-
+    println!("Consiguie el trap code: {:?}", trap_code);
     match trap_code {
         TrapCode::GetC => get_c(regs, &mut std_in)?,
         TrapCode::Out => out(regs, &mut std_out)?,

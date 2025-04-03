@@ -6,6 +6,8 @@ edition = "2024"
 [dependencies]
 termios = "0.3.3"
 ctrlc = "3.4.5"
+byteorder = "1.2.7"
+
 
 [lints.rust]
 unsafe_code = "forbid"

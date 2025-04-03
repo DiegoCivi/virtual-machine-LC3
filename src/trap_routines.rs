@@ -7,6 +7,7 @@ use std::io::{Read, Write};
 
 const NULL: u16 = 0x0000;
 
+#[derive(Debug)]
 pub enum TrapCode {
     GetC = 0x20,
     Out = 0x21,
@@ -75,9 +76,12 @@ pub fn puts(
 ) -> Result<(), VMError> {
     // Get the address of the first character and read it
     let mut c_addr = regs[Register::R0];
+    println!("Leo la address: {:?}", c_addr);
     let mut c = mem.read(c_addr)?;
+    println!("El primer carcter leido es: {:x}", c);
     while c != NULL {
         // Parse it into a u8, write it and pass to the next memory location
+        // println!("Voy a parserar el caracter: {:x}", c);
         let char: u8 = c.try_into().map_err(|_| VMError::Conversion)?;
         stdout_write(&[char], writer)?;
         c_addr = c_addr.wrapping_add(1);

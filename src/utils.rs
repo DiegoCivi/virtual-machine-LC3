@@ -1,15 +1,16 @@
 use std::{
     env::Args,
-    fs::File,
-    io::{self, Read, Write, stdin},
+    fs::{read, File},
+    io::{self, stdin, Read, Write},
     os::fd::AsRawFd,
 };
+
 
 use termios::{ECHO, ICANON, TCSANOW, Termios, tcsetattr};
 
 use crate::{
     error::VMError,
-    hardware::{CondFlag, MEMORY_MAX, Memory, Register, Registers},
+    hardware::{CondFlag, Memory, Register, Registers},
 };
 
 /// Extends a number represented in 'bit_count' bits into
@@ -86,14 +87,16 @@ pub fn stdout_write(buffer: &[u8], writer: &mut impl Write) -> Result<(), VMErro
 
 /// Receives the user's args where the path to the executable will be found.
 /// From there it starts to load the instructions into memory.
-pub fn load_arguments(args: Args, mem: &mut Memory) -> Result<(), VMError> {
+pub fn load_arguments(args: &mut Args, mem: &mut Memory) -> Result<(), VMError> {
     let args_quantiy = args.len();
     if args_quantiy < 2 {
         println!("lc3 [image-file1] ...");
         return Err(VMError::ShellMisuse);
     }
 
-    for image in args {
+    args.next();
+    while let Some(image) = args.next() {
+        println!("Entro a read_image con args: {:?}", image);
         if let Err(e) = read_image(image.clone(), mem) {
             println!("failed to load image: {:?}", image);
             return Err(e);
@@ -106,6 +109,7 @@ pub fn load_arguments(args: Args, mem: &mut Memory) -> Result<(), VMError> {
 /// Opens a file and reads its content into the memory
 fn read_image(image_path: String, mem: &mut Memory) -> Result<(), VMError> {
     let mut file = File::open(image_path).map_err(|_| VMError::OpenFile)?;
+    println!();
     read_image_file(&mut file, mem)?;
     Ok(())
 }
@@ -121,22 +125,29 @@ pub fn read_image_file(file: &mut File, mem: &mut Memory) -> Result<(), VMError>
     let mut origin_buffer: [u8; 2] = [0; 2];
     file.read_exact(&mut origin_buffer)
         .map_err(|_| VMError::ReadFile)?;
-    let origin: usize = join_bytes(origin_buffer[1].into(), origin_buffer[0].into()).into();
+    // let origin: usize = join_bytes(origin_buffer[1].into(), origin_buffer[0].into()).into();
+    let origin = u16::from_be_bytes([origin_buffer[0], origin_buffer[1]]);
 
-    // Define the maximum read we are capable of
-    let max_read: usize = MEMORY_MAX.saturating_sub(origin);
+    println!("origin: {:?}", origin);
 
     // Read the whole file into a buffer
-    let mut file_vec_buffer = Vec::with_capacity(max_read);
-    let file_buffer = file_vec_buffer.as_mut_slice();
-    file.read_exact(file_buffer)
+    // let mut file_vec_buffer = Vec::with_capacity(file.metadata().unwrap().len() as usize);
+    // let file_buffer = file_vec_buffer.as_mut_slice();
+    let mut file_buffer = Vec::new();
+    file.read_to_end(&mut file_buffer)
         .map_err(|_| VMError::ReadFile)?;
-
+    println!("Len of file: {:?}", file_buffer.len());
     // Iter the file content, get the u16 memory locations by adding the
     // u8 and the swap them so we get the little endian format
     let mut mem_addr = origin;
+    let mut temp = 0;
     for chunk in file_buffer.chunks(2) {
-        let mem_data = join_bytes(chunk[1].into(), chunk[0].into());
+        let mem_data = u16::from_be_bytes([chunk[0], chunk[1]]);
+        if temp < 5 {
+            println!("byte0: {:x}  byte1: {:x}  joined: {:x}", chunk[0], chunk[1], mem_data);
+        }
+        temp += 1;
+        // println!("escribio: {:?}", mem_data);
         mem.write(mem_addr, mem_data)?;
         mem_addr = mem_addr.wrapping_add(1);
     }
