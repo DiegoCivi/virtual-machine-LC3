@@ -1,7 +1,7 @@
+use std::io::{stdin, stdout};
+
 use crate::{
-    error::VMError,
-    hardware::{Memory, Register, Registers},
-    utils::{sign_extend, update_flags},
+    error::VMError, hardware::{Memory, Register, Registers}, trap_routines::{get_c, halt, out, puts, puts_p, trap_in, TrapCode}, utils::{sign_extend, update_flags}
 };
 
 /// Adds to values and stores the result in a register
@@ -252,6 +252,22 @@ pub fn store_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> 
     let address = regs[r1].wrapping_add(offset);
     let new_val = regs[sr];
     memory.write(address, new_val)
+}
+
+pub fn trap(instr: u16, regs: &mut Registers, memory: &mut Memory, running_flag: &mut bool) -> Result<(), VMError> {
+    regs[Register::R7] = regs[Register::PC];
+    let trap_code = TrapCode::try_from(instr & 0xFF)?;
+    let mut std_in = stdin().lock();
+    let mut std_out = stdout().lock();
+    match trap_code {
+        TrapCode::GetC => get_c(regs, &mut std_in)?,
+        TrapCode::Out => out(regs, &mut std_out)?,
+        TrapCode::Puts => puts(regs, memory, &mut std_out)?,
+        TrapCode::In => trap_in(regs, &mut std_out, &mut std_in)?,
+        TrapCode::PutsP => puts_p(regs, memory, &mut std_out)?,
+        TrapCode::Halt => halt(running_flag, &mut std_out)?,
+    }
+    Ok(())
 }
 
 #[cfg(test)]

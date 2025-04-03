@@ -26,8 +26,8 @@ fn main() -> Result<(), VMError> {
     regs[Register::PC] = PC_START;
 
     // VM main loop
-    let mut running = true;
-    while running {
+    let mut running_flag = true;
+    while running_flag {
         let instr_addr = regs[Register::PC];
         regs[Register::PC] = regs[Register::PC].wrapping_add(1);
         let instr = mem.read(instr_addr)?;

@@ -3,25 +3,37 @@ use crate::{
     hardware::{Memory, Register, Registers},
     utils::{getchar, stdout_flush, stdout_write, update_flags},
 };
-use std::{
-    char,
-    fs::read,
-    io::{self, Read, Write},
-};
+use std::io::{Read, Write};
 
 const NULL: u16 = 0x0000;
 
-enum TrapCode {
-    GetC = 0x20,
-    Out = 0x21,
-    Puts = 0x22,
-    In = 0x23,
-    PutsP = 0x24,
-    Halt = 0x25,
+pub enum TrapCode {
+    GetC,
+    Out,
+    Puts,
+    In,
+    PutsP,
+    Halt,
+}
+
+impl TryFrom<u16> for TrapCode {
+    type Error = VMError;
+
+    fn try_from(value: u16) -> Result<Self, Self::Error> {
+        match value {
+            0x20 => Ok(TrapCode::GetC),
+            0x21 => Ok(TrapCode::Out),
+            0x22 => Ok(TrapCode::Puts),
+            0x23 => Ok(TrapCode::In),
+            0x24 => Ok(TrapCode::PutsP),
+            0x25 => Ok(TrapCode::Halt),
+            _ => Err(VMError::Conversion),
+        }
+    }
 }
 
 /// Read one character from the stdin.
-fn get_c(regs: &mut Registers, reader: &mut impl Read) -> Result<(), VMError> {
+pub fn get_c(regs: &mut Registers, reader: &mut impl Read) -> Result<(), VMError> {
     let buffer = getchar(reader)?;
     let char: u16 = buffer[0].into();
     regs[Register::R0] = char;
@@ -30,7 +42,7 @@ fn get_c(regs: &mut Registers, reader: &mut impl Read) -> Result<(), VMError> {
 }
 
 /// Output a single character.
-fn out(regs: &mut Registers, writer: &mut impl Write) -> Result<(), VMError> {
+pub fn out(regs: &mut Registers, writer: &mut impl Write) -> Result<(), VMError> {
     let c: u8 = regs[Register::R0]
         .try_into()
         .map_err(|_| VMError::Conversion)?;
@@ -39,7 +51,7 @@ fn out(regs: &mut Registers, writer: &mut impl Write) -> Result<(), VMError> {
 }
 
 /// Prompt for input character from the user.
-fn trap_in(
+pub fn trap_in(
     regs: &mut Registers,
     writer: &mut impl Write,
     reader: &mut impl Read,
@@ -56,7 +68,7 @@ fn trap_in(
 /// Output a null-terminated string. The characters are contained in consecutive memory locations,
 /// one character per memory location, starting with the address specified in R0. Writing
 /// terminates with the occurrence of x0000 in a memory location.
-fn puts(regs: &mut Registers, mem: &mut Memory, writer: &mut impl Write) -> Result<(), VMError> {
+pub fn puts(regs: &mut Registers, mem: &mut Memory, writer: &mut impl Write) -> Result<(), VMError> {
     // Get the address of the first character and read it
     let mut c_addr = regs[Register::R0];
     let mut c = mem.read(c_addr)?;
@@ -74,7 +86,7 @@ fn puts(regs: &mut Registers, mem: &mut Memory, writer: &mut impl Write) -> Resu
 /// Output a null-terminated string. The characters are contained in consecutive memory locations,
 /// but this time there are two characters per memory location, starting with the address specified in R0. Writing
 /// terminates with the occurrence of x0000 in a memory location.
-fn puts_p(regs: &mut Registers, mem: &mut Memory, writer: &mut impl Write) -> Result<(), VMError> {
+pub fn puts_p(regs: &mut Registers, mem: &mut Memory, writer: &mut impl Write) -> Result<(), VMError> {
     // Get the address of the first characters and read them
     let mut c_addr = regs[Register::R0];
     let mut c = mem.read(c_addr)?;
@@ -96,7 +108,7 @@ fn puts_p(regs: &mut Registers, mem: &mut Memory, writer: &mut impl Write) -> Re
 }
 
 /// Halt program
-fn halt(running: &mut bool, writer: &mut impl Write) -> Result<(), VMError> {
+pub fn halt(running: &mut bool, writer: &mut impl Write) -> Result<(), VMError> {
     let s = "HALT\n".as_bytes();
     stdout_write(s, writer)?;
     stdout_flush(writer)?;
