@@ -752,4 +752,40 @@ mod tests {
             registers[Register::R1]
         );
     }
+
+    #[test]
+    /// Test if by using the trap instruction, the register R7 gets the value
+    /// of the PC
+    fn trap_sets_register_7_with_pc_value() {
+        let mut running_flag = false;
+        let mut regs = Registers::new();
+        let mut mem = Memory::new();
+        let pc_val = 0x0A0A;
+        regs[Register::PC] = pc_val;
+        // The instruction will have the following encoding:
+        // 1 1 1 1  0 0 0 0  0 0 1 0  0 1 0 1
+        let instr = 0xF025;
+
+        let _ = trap(instr, &mut regs, &mut mem, &mut running_flag);
+
+        assert_eq!(regs[Register::R7], pc_val);
+    }
+
+    #[test]
+    /// Test trap instruction calls the halt trap routine
+    fn trap_calls_correct_subroutine() {
+        let mut running_flag = true;
+        let mut regs = Registers::new();
+        let mut mem = Memory::new();
+        let pc_val = 0x0A0A;
+        regs[Register::PC] = pc_val;
+        // The instruction will have the following encoding:
+        // 1 1 1 1  0 0 0 0  0 0 1 0  0 1 0 1
+        let instr = 0xF025;
+
+        let _ = trap(instr, &mut regs, &mut mem, &mut running_flag);
+
+        // The running flag should change to false
+        assert!(!running_flag);
+    }
 }
