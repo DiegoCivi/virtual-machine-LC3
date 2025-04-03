@@ -184,7 +184,7 @@ mod tests {
     fn read_image_reads_file_correctly_into_memory() {
         let mut mem = Memory::new();
         let _ = read_image("test_files/bytes.bin".to_string(), &mut mem);
-        
+
         let origin = 0xFA00;
         assert_eq!(mem.read(origin).unwrap(), 0x0102);
         assert_eq!(mem.read(origin + 1).unwrap(), 0x0304);
