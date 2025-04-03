@@ -79,18 +79,22 @@ pub fn stdout_write(buffer: &[u8], writer: &mut impl Write) -> Result<(), VMErro
     Ok(())
 }
 
+/// Sets the handling for the SIGINT signal and
+/// disables the input buffering on the terminal
 pub fn setup() -> Result<Termios, VMError> {
     // Handle interrupt
     /* TODO! */
     disable_input_buffering()
 }
 
+/// Restores the termios to the original one
 pub fn shutdown(initial_termios: Termios) -> Result<(), VMError> {
     let stdin_fd = stdin().lock().as_raw_fd();
     tcsetattr(stdin_fd, TCSANOW, &initial_termios).map_err(|_| VMError::TermiosSetup)?;
     Ok(())
 }
 
+/// Gets the initial termios and disables its input buffering
 fn disable_input_buffering() -> Result<Termios, VMError> {
     let stdin_fd = stdin().lock().as_raw_fd();
     let mut initial_termios = Termios::from_fd(stdin_fd).map_err(|_| VMError::TermiosCreation)?;
