@@ -104,14 +104,14 @@ fn disable_input_buffering() -> Result<Termios, VMError> {
     Ok(initial_termios)
 }
 
-pub fn load_arguments(args: &mut Args) -> Result<(), VMError> {
+pub fn load_arguments(args: &mut Args, mem: &mut Memory) -> Result<(), VMError> {
     if args.len() < 2 {
         println!("lc3 [image-file1] ...");
         exit(2);
     }
     args.next();
     for path in args {
-        if let Err(_) = read_image(path.clone()) {
+        if let Err(_) = read_image(path.clone(), mem) {
             println!("failed to load image: {path}");
             exit(1);
         } 
@@ -120,22 +120,52 @@ pub fn load_arguments(args: &mut Args) -> Result<(), VMError> {
 }
 
 fn read_image(path: String, mem: &mut Memory) -> Result<(), VMError> {
-    let f = fs::read(path).map_err(|_| VMError::OpenFile)?;
-    read_image_file(f, mem)?;
+    let mut f = fs::read(path).map_err(|_| VMError::OpenFile)?;
+    read_image_file(&mut f, mem)?;
     Ok(())
 }
 
-fn read_image_file(file_bytes: Vec<u8>, mem: &mut Memory) -> Result<(), VMError> {
-    let byte0 = *file_bytes.iter().next().ok_or(VMError::NoMoreBytes)?;
-    let byte1 = *file_bytes.iter().next().ok_or(VMError::NoMoreBytes)?;
+fn read_image_file(file_bytes: &mut Vec<u8>, mem: &mut Memory) -> Result<(), VMError> {
+    let byte0 = file_bytes.remove(0);
+    let byte1 = file_bytes.remove(0);
     let origin = u16::from_be_bytes([byte1, byte0]);
 
     let mut mem_addr = origin;
     for chunk in file_bytes.chunks(2) {
-        let byte0 = *file_bytes.iter().next().ok_or(VMError::NoMoreBytes)?;
-        let byte1 = *file_bytes.iter().next().ok_or(VMError::NoMoreBytes)?;
+        let mut chunk_iter = chunk.iter();
+        let byte0 = *chunk_iter.next().ok_or(VMError::NoMoreBytes)?;
+        let byte1 = *chunk_iter.next().ok_or(VMError::NoMoreBytes)?;
         let data = u16::from_be_bytes([byte1, byte0]);
 
+        mem.write(mem_addr, data)?;
+        mem_addr = mem_addr.wrapping_add(1);
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::hardware::Memory;
+
+    use super::read_image_file;
+ 
+    #[test]
+    fn read_image_file_writes_memory_correctly() {
+        let mut data: Vec<u8> = vec![
+            0xFA,
+            0x00,
+            0x01,
+            0x02,
+            0x03,
+            0x04,
+            0x05,
+            0x06,
+        ];
+        let mut mem = Memory::new();
+        let _ = read_image_file(&mut data, &mut mem);
+
+        assert_eq!(mem.read(0x00FA).unwrap(), 0x0201);
+        assert_eq!(mem.read(0x00FB).unwrap(), 0x0403);
+        assert_eq!(mem.read(0x00FC).unwrap(), 0x0605);
+    }
 }

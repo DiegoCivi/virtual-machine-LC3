@@ -1,8 +1,7 @@
-use std::env::{self, Args};
+use std::env;
 
 use error::VMError;
 use hardware::{Memory, Register, Registers};
-use instructions::add;
 use utils::{load_arguments, setup, shutdown};
 
 mod error;
@@ -19,7 +18,7 @@ fn main() -> Result<(), VMError> {
     let mut regs = Registers::new();
     let mut mem = Memory::new();
     // Load Arguments
-    load_arguments(&mut args)?;
+    load_arguments(&mut args, &mut mem)?;
     // Setup
     let termios = setup()?;
     regs[Register::PC] = PC_START;
