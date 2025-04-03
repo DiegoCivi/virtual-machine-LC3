@@ -1,7 +1,10 @@
 use std::io::{stdin, stdout};
 
 use crate::{
-    error::VMError, hardware::{Memory, Register, Registers}, trap_routines::{get_c, halt, out, puts, puts_p, trap_in, TrapCode}, utils::{sign_extend, update_flags}
+    error::VMError,
+    hardware::{Memory, Register, Registers},
+    trap_routines::{TrapCode, get_c, halt, out, puts, puts_p, trap_in},
+    utils::{sign_extend, update_flags},
 };
 
 /// Adds to values and stores the result in a register
@@ -223,7 +226,11 @@ pub fn store(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<()
 /// is taken indirectly from the instruction. By adding the PC and the PCoffset9 section
 /// we get the first memory address, then if we read it we get the final address. That
 /// final address is the one that is going to get written.
-pub fn store_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+pub fn store_indirect(
+    instr: u16,
+    regs: &mut Registers,
+    memory: &mut Memory,
+) -> Result<(), VMError> {
     // Source Register
     let sr = Register::from_u16((instr >> 9) & 0x7)?;
     // PCoffset9 section
@@ -240,7 +247,11 @@ pub fn store_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> 
 /// Stores the value that is in a register into an address in memory. By adding
 /// the value on the register specified in the BaseR section and the value in the
 /// offset6 section we get the memory address. That address is the one that is going to get written.
-pub fn store_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+pub fn store_register(
+    instr: u16,
+    regs: &mut Registers,
+    memory: &mut Memory,
+) -> Result<(), VMError> {
     // Source Register
     let sr = Register::from_u16((instr >> 9) & 0x7)?;
     // BaseR section
@@ -254,7 +265,12 @@ pub fn store_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> 
     memory.write(address, new_val)
 }
 
-pub fn trap(instr: u16, regs: &mut Registers, memory: &mut Memory, running_flag: &mut bool) -> Result<(), VMError> {
+pub fn trap(
+    instr: u16,
+    regs: &mut Registers,
+    memory: &mut Memory,
+    running_flag: &mut bool,
+) -> Result<(), VMError> {
     regs[Register::R7] = regs[Register::PC];
     let trap_code = TrapCode::try_from(instr & 0xFF)?;
     let mut std_in = stdin().lock();

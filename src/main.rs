@@ -2,8 +2,8 @@ use std::env;
 
 use error::VMError;
 use hardware::{CondFlag, Memory, OpCode, Register, Registers};
-use utils::{load_arguments, setup, shutdown};
 use instructions::*;
+use utils::{load_arguments, setup, shutdown};
 
 mod error;
 mod hardware;
@@ -33,22 +33,21 @@ fn main() -> Result<(), VMError> {
         let instr = mem.read(instr_addr)?;
         let op_code = OpCode::try_from(instr >> 12)?;
         match op_code {
-            OpCode::Br => branch(instr, &mut regs).unwrap(),
-            OpCode::Add => add(instr, &mut regs).unwrap(),
-            OpCode::Ld => load(instr, &mut regs, &mut mem).unwrap(),
-            OpCode::St => store(instr, &mut regs, &mut mem).unwrap(),
-            OpCode::Jsr => jump_register(instr, &mut regs).unwrap(),
-            OpCode::And => and(instr, &mut regs).unwrap(),
-            OpCode::Ldr => load_register(instr, &mut regs, &mut mem).unwrap(),
-            OpCode::Str => store_register(instr, &mut regs, &mut mem).unwrap(),
-            OpCode::Not => not(instr, &mut regs).unwrap(),
-            OpCode::Ldi => load_indirect(instr, &mut regs, &mut mem).unwrap(),
-            OpCode::Sti => store_indirect(instr, &mut regs, &mut mem).unwrap(),
-            OpCode::Jmp => jump(instr, &mut regs).unwrap(),
-            OpCode::Lea => load_effective_address(instr, &mut regs).unwrap(),
-            OpCode::Trap => trap(instr, &mut regs, &mut mem, &mut running_flag).unwrap(),
+            OpCode::Br => branch(instr, &mut regs)?,
+            OpCode::Add => add(instr, &mut regs)?,
+            OpCode::Ld => load(instr, &mut regs, &mut mem)?,
+            OpCode::St => store(instr, &mut regs, &mut mem)?,
+            OpCode::Jsr => jump_register(instr, &mut regs)?,
+            OpCode::And => and(instr, &mut regs)?,
+            OpCode::Ldr => load_register(instr, &mut regs, &mut mem)?,
+            OpCode::Str => store_register(instr, &mut regs, &mut mem)?,
+            OpCode::Not => not(instr, &mut regs)?,
+            OpCode::Ldi => load_indirect(instr, &mut regs, &mut mem)?,
+            OpCode::Sti => store_indirect(instr, &mut regs, &mut mem)?,
+            OpCode::Jmp => jump(instr, &mut regs)?,
+            OpCode::Lea => load_effective_address(instr, &mut regs)?,
+            OpCode::Trap => trap(instr, &mut regs, &mut mem, &mut running_flag)?,
         }
-
     }
 
     // Shutdown
