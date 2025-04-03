@@ -139,7 +139,7 @@ fn read_image_file(file_bytes: &mut Vec<u8>, mem: &mut Memory) -> Result<(), VME
     // Get the first 2 bytes and join them in reverse order to get the origin
     let byte0 = file_bytes.remove(0);
     let byte1 = file_bytes.remove(0);
-    let origin = u16::from_be_bytes([byte1, byte0]);
+    let origin = u16::from_be_bytes([byte0, byte1]);
 
     // Get chunks of 2 bytes and join them in reverse order so we get the data.
     // This data starts to get written from memory address = origin
@@ -148,7 +148,7 @@ fn read_image_file(file_bytes: &mut Vec<u8>, mem: &mut Memory) -> Result<(), VME
         let mut chunk_iter = chunk.iter();
         let byte0 = *chunk_iter.next().ok_or(VMError::NoMoreBytes)?;
         let byte1 = *chunk_iter.next().ok_or(VMError::NoMoreBytes)?;
-        let data = u16::from_be_bytes([byte1, byte0]);
+        let data = u16::from_be_bytes([byte0, byte1]);
 
         mem.write(mem_addr, data)?;
         mem_addr = mem_addr.wrapping_add(1);
@@ -171,9 +171,10 @@ mod tests {
         let mut mem = Memory::new();
         read_image_file(&mut data, &mut mem).unwrap();
 
-        assert_eq!(mem.read(0x00FA).unwrap(), 0x0201);
-        assert_eq!(mem.read(0x00FB).unwrap(), 0x0403);
-        assert_eq!(mem.read(0x00FC).unwrap(), 0x0605);
+        let origin = 0xFA00;
+        assert_eq!(mem.read(origin).unwrap(), 0x0102);
+        assert_eq!(mem.read(origin + 1).unwrap(), 0x0304);
+        assert_eq!(mem.read(origin + 2).unwrap(), 0x0506);
     }
 
     #[test]
@@ -183,8 +184,10 @@ mod tests {
     fn read_image_reads_file_correctly_into_memory() {
         let mut mem = Memory::new();
         let _ = read_image("test_files/bytes.bin".to_string(), &mut mem);
-        assert_eq!(mem.read(0x00FA).unwrap(), 0x0201);
-        assert_eq!(mem.read(0x00FB).unwrap(), 0x0403);
-        assert_eq!(mem.read(0x00FC).unwrap(), 0x0605);
+        
+        let origin = 0xFA00;
+        assert_eq!(mem.read(origin).unwrap(), 0x0102);
+        assert_eq!(mem.read(origin + 1).unwrap(), 0x0304);
+        assert_eq!(mem.read(origin + 2).unwrap(), 0x0506);
     }
 }
