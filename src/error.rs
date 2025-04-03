@@ -6,4 +6,8 @@ pub enum VMError {
     STDINRead,
     STDOUTWrite,
     STDOUTFlush,
+    TermiosCreation,
+    TermiosSetup,
+    OpenFile,
+    NoMoreBytes,
 }
