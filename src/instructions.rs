@@ -85,7 +85,7 @@ pub fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
         regs[dr] = regs[sr1] & regs[sr2];
     }
 
-    update_flags(sr1, regs);
+    update_flags(dr, regs);
     Ok(())
 }
 
