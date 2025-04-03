@@ -1,4 +1,4 @@
-use std::{env::Args, fs, io::{self, stdin, Read, Write}, mem, os::fd::AsRawFd, process::exit};
+use std::{env::Args, fs, io::{stdin, Read, Write}, os::fd::AsRawFd, process::exit};
 
 use termios::{tcsetattr, Termios, ECHO, ICANON, TCSANOW};
 
@@ -129,13 +129,14 @@ fn read_image_file(file_bytes: &mut Vec<u8>, mem: &mut Memory) -> Result<(), VME
     let byte0 = file_bytes.remove(0);
     let byte1 = file_bytes.remove(0);
     let origin = u16::from_be_bytes([byte1, byte0]);
-
+    println!("{:x}", origin);
     let mut mem_addr = origin;
     for chunk in file_bytes.chunks(2) {
         let mut chunk_iter = chunk.iter();
         let byte0 = *chunk_iter.next().ok_or(VMError::NoMoreBytes)?;
         let byte1 = *chunk_iter.next().ok_or(VMError::NoMoreBytes)?;
         let data = u16::from_be_bytes([byte1, byte0]);
+        println!("{:x}", data);
 
         mem.write(mem_addr, data)?;
         mem_addr = mem_addr.wrapping_add(1);
@@ -147,7 +148,7 @@ fn read_image_file(file_bytes: &mut Vec<u8>, mem: &mut Memory) -> Result<(), VME
 mod tests {
     use crate::hardware::Memory;
 
-    use super::read_image_file;
+    use super::*;
  
     #[test]
     fn read_image_file_writes_memory_correctly() {
@@ -162,8 +163,17 @@ mod tests {
             0x06,
         ];
         let mut mem = Memory::new();
-        let _ = read_image_file(&mut data, &mut mem);
+        read_image_file(&mut data, &mut mem).unwrap();
 
+        assert_eq!(mem.read(0x00FA).unwrap(), 0x0201);
+        assert_eq!(mem.read(0x00FB).unwrap(), 0x0403);
+        assert_eq!(mem.read(0x00FC).unwrap(), 0x0605);
+    }
+
+    #[test]
+    fn read_image_reads_file_correctly_into_memory() {
+        let mut mem = Memory::new();
+        let _ = read_image("test_files/bytes.bin".to_string(), &mut mem);
         assert_eq!(mem.read(0x00FA).unwrap(), 0x0201);
         assert_eq!(mem.read(0x00FB).unwrap(), 0x0403);
         assert_eq!(mem.read(0x00FC).unwrap(), 0x0605);
