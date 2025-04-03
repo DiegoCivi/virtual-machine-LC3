@@ -1,4 +1,4 @@
-use std::{io::{self, stdin, Read, Write}, os::fd::AsRawFd};
+use std::{env::Args, io::{self, stdin, Read, Write}, os::fd::AsRawFd, process::exit};
 
 use termios::{tcsetattr, Termios, ECHO, ICANON, TCSANOW};
 
@@ -102,4 +102,19 @@ fn disable_input_buffering() -> Result<Termios, VMError> {
     initial_termios.c_lflag &= !ICANON & !ECHO;
     tcsetattr(stdin_fd, TCSANOW, &initial_termios).map_err(|_| VMError::TermiosSetup)?;
     Ok(initial_termios)
+}
+
+pub fn load_arguments(args: &mut Args) -> Result<(), VMError> {
+    if args.len() < 2 {
+        println!("lc3 [image-file1] ...");
+        exit(2);
+    }
+    args.next();
+    for path in args {
+        if let Err(e) = read_image(path) {
+            println!("failed to load image: {path}");
+            exit(1);
+        } 
+    }
+    Ok(())
 }
