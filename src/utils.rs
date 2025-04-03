@@ -1,4 +1,4 @@
-use std::{env::Args, io::{self, stdin, Read, Write}, os::fd::AsRawFd, process::exit};
+use std::{env::Args, fs, io::{self, stdin, Read, Write}, mem, os::fd::AsRawFd, process::exit};
 
 use termios::{tcsetattr, Termios, ECHO, ICANON, TCSANOW};
 
@@ -111,10 +111,31 @@ pub fn load_arguments(args: &mut Args) -> Result<(), VMError> {
     }
     args.next();
     for path in args {
-        if let Err(e) = read_image(path) {
+        if let Err(_) = read_image(path.clone()) {
             println!("failed to load image: {path}");
             exit(1);
         } 
+    }
+    Ok(())
+}
+
+fn read_image(path: String, mem: &mut Memory) -> Result<(), VMError> {
+    let f = fs::read(path).map_err(|_| VMError::OpenFile)?;
+    read_image_file(f, mem)?;
+    Ok(())
+}
+
+fn read_image_file(file_bytes: Vec<u8>, mem: &mut Memory) -> Result<(), VMError> {
+    let byte0 = *file_bytes.iter().next().ok_or(VMError::NoMoreBytes)?;
+    let byte1 = *file_bytes.iter().next().ok_or(VMError::NoMoreBytes)?;
+    let origin = u16::from_be_bytes([byte1, byte0]);
+
+    let mut mem_addr = origin;
+    for chunk in file_bytes.chunks(2) {
+        let byte0 = *file_bytes.iter().next().ok_or(VMError::NoMoreBytes)?;
+        let byte1 = *file_bytes.iter().next().ok_or(VMError::NoMoreBytes)?;
+        let data = u16::from_be_bytes([byte1, byte0]);
+
     }
     Ok(())
 }

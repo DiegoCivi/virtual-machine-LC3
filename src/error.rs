@@ -8,4 +8,6 @@ pub enum VMError {
     STDOUTFlush,
     TermiosCreation,
     TermiosSetup,
+    OpenFile,
+    NoMoreBytes,
 }
