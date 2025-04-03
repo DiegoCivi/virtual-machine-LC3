@@ -1,4 +1,6 @@
-use std::io::{self, Read, Write, stdin};
+use std::{io::{self, stdin, Read, Write}, os::fd::AsRawFd};
+
+use termios::{tcsetattr, Termios, ECHO, ICANON, TCSANOW};
 
 use crate::{
     error::VMError,
@@ -75,4 +77,25 @@ pub fn stdout_flush(writer: &mut impl Write) -> Result<(), VMError> {
 pub fn stdout_write(buffer: &[u8], writer: &mut impl Write) -> Result<(), VMError> {
     writer.write_all(buffer).map_err(|_| VMError::STDOUTWrite)?;
     Ok(())
+}
+
+pub fn setup() -> Result<Termios, VMError> {
+    // Handle interrupt
+    /* TODO! */
+    disable_input_buffering()
+}
+
+pub fn shutdown(initial_termios: Termios) -> Result<(), VMError> {
+    let stdin_fd = stdin().lock().as_raw_fd();
+    tcsetattr(stdin_fd, TCSANOW, &initial_termios).map_err(|_| VMError::TermiosSetup)?;
+    Ok(())
+}
+
+fn disable_input_buffering() -> Result<Termios, VMError> {
+    let stdin_fd = stdin().lock().as_raw_fd();
+    let mut initial_termios = Termios::from_fd(stdin_fd).map_err(|_| VMError::TermiosCreation)?;
+    tcsetattr(stdin_fd, TCSANOW, &initial_termios).map_err(|_| VMError::TermiosSetup)?;
+    initial_termios.c_lflag &= !ICANON & !ECHO;
+    tcsetattr(stdin_fd, TCSANOW, &initial_termios).map_err(|_| VMError::TermiosSetup)?;
+    Ok(initial_termios)
 }
