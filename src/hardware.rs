@@ -3,10 +3,7 @@ use std::{
     ops::{Index, IndexMut},
 };
 
-use crate::{
-    error::VMError,
-    utils::getchar,
-};
+use crate::{error::VMError, utils::getchar};
 
 const MEMORY_MAX: usize = 65535;
 const REGS_COUNT: usize = 10;
