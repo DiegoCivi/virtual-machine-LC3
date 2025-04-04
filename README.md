@@ -16,6 +16,10 @@ To run the 2048 game on the VM you must run:
 ```sh
 make
 ```
+To run the rogue game on the VM you must run:
+```sh
+make rogue
+```
 To run the tests you must run:
 ```sh
 make test
