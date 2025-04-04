@@ -1,11 +1,18 @@
-use std::io::{stdin, stdout};
-
 use crate::{
     error::VMError,
     hardware::{Memory, Register, Registers},
     trap_routines::{TrapCode, get_c, halt, out, puts, puts_p, trap_in},
     utils::{sign_extend, update_flags},
 };
+use std::io::{stdin, stdout};
+
+const ONE_BIT_MASK: u16 = 0b1;
+const THREE_BIT_MASK: u16 = 0b111;
+const FIVE_BIT_MASK: u16 = 0b11111;
+const SIX_BIT_MASK: u16 = 0b11_1111;
+const EIGHT_BIT_MASK: u16 = 0b1111_1111;
+const NINE_BIT_MASK: u16 = 0b1_1111_1111;
+const ELEVEN_BIT_MASK: u16 = 0b111_1111_1111;
 
 /// Adds to values and stores the result in a register
 ///
@@ -20,21 +27,21 @@ use crate::{
 /// - `regs`: A Registers struct that handles each register.
 pub fn add(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     // Destination register
-    let dr: Register = Register::from_u16((instr >> 9) & 0x7)?;
+    let dr: Register = Register::from_u16((instr >> 9) & THREE_BIT_MASK)?;
     // First operand
-    let sr1: Register = Register::from_u16((instr >> 6) & 0x7)?;
+    let sr1: Register = Register::from_u16((instr >> 6) & THREE_BIT_MASK)?;
     // Check the bit 5 to see if we are in immediate mode
-    let imm_flag = (instr >> 5) & 0x1;
+    let imm_flag = (instr >> 5) & ONE_BIT_MASK;
 
     if imm_flag == 1 {
         // Get the 5 bits of the imm5 section (first 5 bits) and sign extend them
-        let mut imm5 = instr & 0x1F;
+        let mut imm5 = instr & FIVE_BIT_MASK;
         imm5 = sign_extend(imm5, 5)?;
         regs[dr] = regs[sr1].wrapping_add(imm5);
     } else {
         // Since the immediate flag was off, we only need the SR2 section (first 3 bits).
         // This section contains the register containing the value to add.
-        let sr2 = Register::from_u16(instr & 0x7)?;
+        let sr2 = Register::from_u16(instr & THREE_BIT_MASK)?;
         regs[dr] = regs[sr1].wrapping_add(regs[sr2]);
     }
 
@@ -49,8 +56,8 @@ pub fn add(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 /// - `instr`: An u16 that has the encoding of the whole instruction to execute.
 /// - `regs`: A Registers struct that handles each register.
 pub fn not(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
-    let dr = Register::from_u16((instr >> 9) & 0x7)?;
-    let sr = Register::from_u16((instr >> 6) & 0x7)?;
+    let dr = Register::from_u16((instr >> 9) & THREE_BIT_MASK)?;
+    let sr = Register::from_u16((instr >> 6) & THREE_BIT_MASK)?;
 
     regs[dr] = !regs[sr];
     update_flags(dr, regs);
@@ -71,20 +78,20 @@ pub fn not(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 /// - `regs`: A Registers struct that handles each register.
 pub fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     // Destination register
-    let dr = Register::from_u16((instr >> 9) & 0x7)?;
+    let dr = Register::from_u16((instr >> 9) & THREE_BIT_MASK)?;
     // SR1 section
-    let sr1 = Register::from_u16((instr >> 6) & 0x1)?;
+    let sr1 = Register::from_u16((instr >> 6) & THREE_BIT_MASK)?;
     // Imm flag
-    let imm_flag = (instr >> 5) & 0x1;
+    let imm_flag = (instr >> 5) & ONE_BIT_MASK;
 
     if imm_flag == 1 {
         // Get the imm5 section, then do the bitwise and with the content on R1.
-        let mut imm5 = instr & 0x1F;
+        let mut imm5 = instr & FIVE_BIT_MASK;
         imm5 = sign_extend(imm5, 5)?;
         regs[dr] = regs[sr1] & imm5;
     } else {
         // Get the SR2 section, then do the bitwise and with the content on R1.
-        let sr2 = Register::from_u16(instr & 0x7)?;
+        let sr2 = Register::from_u16(instr & THREE_BIT_MASK)?;
         regs[dr] = regs[sr1] & regs[sr2];
     }
 
@@ -102,11 +109,11 @@ pub fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 /// - `regs`: A Registers struct that handles each register.
 pub fn branch(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     // Get the PCOffset9 section
-    let mut pc_offset = instr & 0x1FF;
+    let mut pc_offset = instr & NINE_BIT_MASK;
     pc_offset = sign_extend(pc_offset, 9)?;
     // Get the Condition Flag and check if it is the same
     // as the one selcted on the instruction
-    let cond_flag = (instr >> 9) & 0x7;
+    let cond_flag = (instr >> 9) & THREE_BIT_MASK;
     let coincides = cond_flag & regs[Register::Cond];
     if coincides != 0 {
         regs[Register::PC] = regs[Register::PC].wrapping_add(pc_offset);
@@ -117,7 +124,7 @@ pub fn branch(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 /// Changes the PC with the value of a specified register
 pub fn jump(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     // Get the BaseR section
-    let baser_r = Register::from_u16((instr >> 6) & 0x7)?;
+    let baser_r = Register::from_u16((instr >> 6) & THREE_BIT_MASK)?;
     regs[Register::PC] = regs[baser_r];
     Ok(())
 }
@@ -131,11 +138,11 @@ pub fn jump_register(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     let long_flag = (instr >> 11) & 1;
     regs[Register::R7] = regs[Register::PC];
     if long_flag == 1 {
-        let mut long_pc_offset = instr & 0x7FF;
+        let mut long_pc_offset = instr & ELEVEN_BIT_MASK;
         long_pc_offset = sign_extend(long_pc_offset, 11)?;
         regs[Register::PC] = regs[Register::PC].wrapping_add(long_pc_offset);
     } else {
-        let r1 = Register::from_u16((instr >> 6) & 0x7)?;
+        let r1 = Register::from_u16((instr >> 6) & THREE_BIT_MASK)?;
         regs[Register::PC] = regs[r1];
     }
     Ok(())
@@ -150,9 +157,9 @@ pub fn jump_register(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 /// - `regs`: A Registers struct that handles each register.
 pub fn load_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Destination register
-    let dr = Register::from_u16((instr >> 9) & 0x7)?;
+    let dr = Register::from_u16((instr >> 9) & THREE_BIT_MASK)?;
     // PCoffset 9 section
-    let mut pc_offset = instr & 0x1FF;
+    let mut pc_offset = instr & NINE_BIT_MASK;
     pc_offset = sign_extend(pc_offset, 9)?;
     // Add the number that was on PCoffset 9 section to PC to get the
     // memory location we need to look at for the final address
@@ -166,9 +173,9 @@ pub fn load_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> R
 /// Loads a value from a location in memory into a register
 pub fn load(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Destination register
-    let dr = Register::from_u16((instr >> 9) & 0x7)?;
+    let dr = Register::from_u16((instr >> 9) & THREE_BIT_MASK)?;
     // PCoffset 9 section
-    let mut pc_offset = instr & 0x1FF;
+    let mut pc_offset = instr & NINE_BIT_MASK;
     pc_offset = sign_extend(pc_offset, 9)?;
     // Calculate the memory address to read
     let address = regs[Register::PC].wrapping_add(pc_offset);
@@ -181,11 +188,11 @@ pub fn load(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(),
 /// of the value on a register and in the offset6 section, into a desired register
 pub fn load_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Destination Register
-    let dr = Register::from_u16((instr >> 9) & 0x7)?;
+    let dr = Register::from_u16((instr >> 9) & THREE_BIT_MASK)?;
     // BaseR section
-    let r1 = Register::from_u16((instr >> 6) & 0x7)?;
+    let r1 = Register::from_u16((instr >> 6) & THREE_BIT_MASK)?;
     // Offset6 section
-    let mut offset6 = instr & 0x3F;
+    let mut offset6 = instr & SIX_BIT_MASK;
     offset6 = sign_extend(offset6, 6)?;
     // Calculate the memory address to read
     let address = regs[r1].wrapping_add(offset6);
@@ -198,9 +205,9 @@ pub fn load_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> R
 /// one in the PCoffset9 section, into a register
 pub fn load_effective_address(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     // Destination Register
-    let dr = Register::from_u16((instr >> 9) & 0x7)?;
+    let dr = Register::from_u16((instr >> 9) & THREE_BIT_MASK)?;
     // PCoffset9 section
-    let mut pc_offset = instr & 0x1FF;
+    let mut pc_offset = instr & NINE_BIT_MASK;
     pc_offset = sign_extend(pc_offset, 9)?;
     // Set the new value for the destination register
     regs[dr] = regs[Register::PC].wrapping_add(pc_offset);
@@ -212,9 +219,9 @@ pub fn load_effective_address(instr: u16, regs: &mut Registers) -> Result<(), VM
 /// is created from the addition of the PC and the PCoffset9 section
 pub fn store(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Source Register
-    let sr = Register::from_u16((instr >> 9) & 0x7)?;
+    let sr = Register::from_u16((instr >> 9) & THREE_BIT_MASK)?;
     // PCoffset9 section
-    let mut pc_offset = instr & 0x1FF;
+    let mut pc_offset = instr & NINE_BIT_MASK;
     pc_offset = sign_extend(pc_offset, 9)?;
     // Calculate the address
     let address = regs[Register::PC].wrapping_add(pc_offset);
@@ -232,9 +239,9 @@ pub fn store_indirect(
     memory: &mut Memory,
 ) -> Result<(), VMError> {
     // Source Register
-    let sr = Register::from_u16((instr >> 9) & 0x7)?;
+    let sr = Register::from_u16((instr >> 9) & THREE_BIT_MASK)?;
     // PCoffset9 section
-    let mut pc_offset = instr & 0x1FF;
+    let mut pc_offset = instr & NINE_BIT_MASK;
     pc_offset = sign_extend(pc_offset, 9)?;
     // Get the first address
     let first_address = regs[Register::PC].wrapping_add(pc_offset);
@@ -253,11 +260,11 @@ pub fn store_register(
     memory: &mut Memory,
 ) -> Result<(), VMError> {
     // Source Register
-    let sr = Register::from_u16((instr >> 9) & 0x7)?;
+    let sr = Register::from_u16((instr >> 9) & THREE_BIT_MASK)?;
     // BaseR section
-    let r1 = Register::from_u16((instr >> 6) & 0x7)?;
+    let r1 = Register::from_u16((instr >> 6) & THREE_BIT_MASK)?;
     // Offset 6 section
-    let mut offset = instr & 0x3f;
+    let mut offset = instr & SIX_BIT_MASK;
     offset = sign_extend(offset, 6)?;
     // Calculate the address
     let address = regs[r1].wrapping_add(offset);
@@ -272,7 +279,7 @@ pub fn trap(
     running_flag: &mut bool,
 ) -> Result<(), VMError> {
     regs[Register::R7] = regs[Register::PC];
-    let trap_code = TrapCode::try_from(instr & 0xFF)?;
+    let trap_code = TrapCode::try_from(instr & EIGHT_BIT_MASK)?;
     let mut std_in = stdin().lock();
     let mut std_out = stdout().lock();
     match trap_code {
