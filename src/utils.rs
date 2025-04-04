@@ -102,7 +102,7 @@ pub fn shutdown(initial_termios: Termios) -> Result<(), VMError> {
 fn disable_input_buffering() -> Result<Termios, VMError> {
     let stdin_fd = stdin().lock().as_raw_fd();
     let initial_termios = Termios::from_fd(stdin_fd).map_err(|_| VMError::TermiosCreation)?;
-    let mut new_termios = initial_termios.clone();
+    let mut new_termios = initial_termios;
     new_termios.c_lflag &= !ICANON & !ECHO;
     tcsetattr(stdin_fd, TCSANOW, &new_termios).map_err(|_| VMError::TermiosSetup)?;
     Ok(initial_termios)
