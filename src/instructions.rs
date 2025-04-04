@@ -73,7 +73,7 @@ pub fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     // Destination register
     let dr = Register::from_u16((instr >> 9) & 0x7)?;
     // SR1 section
-    let sr1 = Register::from_u16((instr >> 6) & 0x1)?;
+    let sr1 = Register::from_u16((instr >> 6) & 0x7)?;
     // Imm flag
     let imm_flag = (instr >> 5) & 0x1;
 
