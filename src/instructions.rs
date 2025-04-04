@@ -1,6 +1,9 @@
+use std::io::{stdin, stdout};
+
 use crate::{
     error::VMError,
     hardware::{Memory, Register, Registers},
+    trap_routines::{TrapCode, get_c, halt, out, puts, puts_p, trap_in},
     utils::{sign_extend, update_flags},
 };
 
@@ -45,7 +48,7 @@ pub fn add(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 ///
 /// - `instr`: An u16 that has the encoding of the whole instruction to execute.
 /// - `regs`: A Registers struct that handles each register.
-fn not(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+pub fn not(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     let dr = Register::from_u16((instr >> 9) & 0x7)?;
     let sr = Register::from_u16((instr >> 6) & 0x7)?;
 
@@ -66,7 +69,7 @@ fn not(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 ///
 /// - `instr`: An u16 that has the encoding of the whole instruction to execute.
 /// - `regs`: A Registers struct that handles each register.
-fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+pub fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     // Destination register
     let dr = Register::from_u16((instr >> 9) & 0x7)?;
     // SR1 section
@@ -85,7 +88,7 @@ fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
         regs[dr] = regs[sr1] & regs[sr2];
     }
 
-    update_flags(sr1, regs);
+    update_flags(dr, regs);
     Ok(())
 }
 
@@ -97,7 +100,7 @@ fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 ///
 /// - `instr`: An u16 that has the encoding of the whole instruction to execute.
 /// - `regs`: A Registers struct that handles each register.
-fn branch(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+pub fn branch(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     // Get the PCOffset9 section
     let mut pc_offset = instr & 0x1FF;
     pc_offset = sign_extend(pc_offset, 9)?;
@@ -105,14 +108,14 @@ fn branch(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     // as the one selcted on the instruction
     let cond_flag = (instr >> 9) & 0x7;
     let coincides = cond_flag & regs[Register::Cond];
-    if coincides == cond_flag {
+    if coincides != 0 {
         regs[Register::PC] = regs[Register::PC].wrapping_add(pc_offset);
     }
     Ok(())
 }
 
 /// Changes the PC with the value of a specified register
-fn jump(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+pub fn jump(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     // Get the BaseR section
     let baser_r = Register::from_u16((instr >> 6) & 0x7)?;
     regs[Register::PC] = regs[baser_r];
@@ -124,7 +127,7 @@ fn jump(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 /// situated in the bit 11. The long flag being set means it can be a value
 /// of eleven bits. If the flags is not set, the value is taken from
 /// a register.
-fn jump_register(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+pub fn jump_register(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     let long_flag = (instr >> 11) & 1;
     regs[Register::R7] = regs[Register::PC];
     if long_flag == 1 {
@@ -145,7 +148,7 @@ fn jump_register(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 ///
 /// - `instr`: An u16 that has the encoding of the whole instruction to execute.
 /// - `regs`: A Registers struct that handles each register.
-fn load_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+pub fn load_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Destination register
     let dr = Register::from_u16((instr >> 9) & 0x7)?;
     // PCoffset 9 section
@@ -161,7 +164,7 @@ fn load_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Resul
 }
 
 /// Loads a value from a location in memory into a register
-fn load(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+pub fn load(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Destination register
     let dr = Register::from_u16((instr >> 9) & 0x7)?;
     // PCoffset 9 section
@@ -176,7 +179,7 @@ fn load(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VME
 
 /// Loads a value that is located in a memory address, formed by the addition
 /// of the value on a register and in the offset6 section, into a desired register
-fn load_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+pub fn load_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Destination Register
     let dr = Register::from_u16((instr >> 9) & 0x7)?;
     // BaseR section
@@ -193,7 +196,7 @@ fn load_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Resul
 
 /// Loads a value created from the addition of the value of the PC and the
 /// one in the PCoffset9 section, into a register
-fn load_effective_address(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
+pub fn load_effective_address(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     // Destination Register
     let dr = Register::from_u16((instr >> 9) & 0x7)?;
     // PCoffset9 section
@@ -207,7 +210,7 @@ fn load_effective_address(instr: u16, regs: &mut Registers) -> Result<(), VMErro
 
 /// Stores the value that is in a register into an address in memory. This address
 /// is created from the addition of the PC and the PCoffset9 section
-fn store(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+pub fn store(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Source Register
     let sr = Register::from_u16((instr >> 9) & 0x7)?;
     // PCoffset9 section
@@ -223,7 +226,11 @@ fn store(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VM
 /// is taken indirectly from the instruction. By adding the PC and the PCoffset9 section
 /// we get the first memory address, then if we read it we get the final address. That
 /// final address is the one that is going to get written.
-fn store_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+pub fn store_indirect(
+    instr: u16,
+    regs: &mut Registers,
+    memory: &mut Memory,
+) -> Result<(), VMError> {
     // Source Register
     let sr = Register::from_u16((instr >> 9) & 0x7)?;
     // PCoffset9 section
@@ -240,7 +247,11 @@ fn store_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Resu
 /// Stores the value that is in a register into an address in memory. By adding
 /// the value on the register specified in the BaseR section and the value in the
 /// offset6 section we get the memory address. That address is the one that is going to get written.
-fn store_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
+pub fn store_register(
+    instr: u16,
+    regs: &mut Registers,
+    memory: &mut Memory,
+) -> Result<(), VMError> {
     // Source Register
     let sr = Register::from_u16((instr >> 9) & 0x7)?;
     // BaseR section
@@ -252,6 +263,27 @@ fn store_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Resu
     let address = regs[r1].wrapping_add(offset);
     let new_val = regs[sr];
     memory.write(address, new_val)
+}
+
+pub fn trap(
+    instr: u16,
+    regs: &mut Registers,
+    memory: &mut Memory,
+    running_flag: &mut bool,
+) -> Result<(), VMError> {
+    regs[Register::R7] = regs[Register::PC];
+    let trap_code = TrapCode::try_from(instr & 0xFF)?;
+    let mut std_in = stdin().lock();
+    let mut std_out = stdout().lock();
+    match trap_code {
+        TrapCode::GetC => get_c(regs, &mut std_in)?,
+        TrapCode::Out => out(regs, &mut std_out)?,
+        TrapCode::Puts => puts(regs, memory, &mut std_out)?,
+        TrapCode::In => trap_in(regs, &mut std_out, &mut std_in)?,
+        TrapCode::PutsP => puts_p(regs, memory, &mut std_out)?,
+        TrapCode::Halt => halt(running_flag, &mut std_out)?,
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -735,5 +767,41 @@ mod tests {
             memory.read(affected_address).unwrap(),
             registers[Register::R1]
         );
+    }
+
+    #[test]
+    /// Test if by using the trap instruction, the register R7 gets the value
+    /// of the PC
+    fn trap_sets_register_7_with_pc_value() {
+        let mut running_flag = false;
+        let mut regs = Registers::new();
+        let mut mem = Memory::new();
+        let pc_val = 0x0A0A;
+        regs[Register::PC] = pc_val;
+        // The instruction will have the following encoding:
+        // 1 1 1 1  0 0 0 0  0 0 1 0  0 1 0 1
+        let instr = 0xF025;
+
+        let _ = trap(instr, &mut regs, &mut mem, &mut running_flag);
+
+        assert_eq!(regs[Register::R7], pc_val);
+    }
+
+    #[test]
+    /// Test trap instruction calls the halt trap routine
+    fn trap_calls_correct_subroutine() {
+        let mut running_flag = true;
+        let mut regs = Registers::new();
+        let mut mem = Memory::new();
+        let pc_val = 0x0A0A;
+        regs[Register::PC] = pc_val;
+        // The instruction will have the following encoding:
+        // 1 1 1 1  0 0 0 0  0 0 1 0  0 1 0 1
+        let instr = 0xF025;
+
+        let _ = trap(instr, &mut regs, &mut mem, &mut running_flag);
+
+        // The running flag should change to false
+        assert!(!running_flag);
     }
 }

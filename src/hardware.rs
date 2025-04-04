@@ -161,7 +161,7 @@ impl IndexMut<Register> for Registers {
 
 /// Opcodes that identify an operation
 /// that the VM supports.
-enum OpCode {
+pub enum OpCode {
     Br,
     Add,
     Ld,
@@ -170,35 +170,34 @@ enum OpCode {
     And,
     Ldr,
     Str,
-    Rti,
     Not,
     Ldi,
     Sti,
     Jmp,
-    Res,
     Lea,
     Trap,
 }
 
-impl OpCode {
-    fn index(&self) -> usize {
-        match self {
-            OpCode::Br => 0,
-            OpCode::Add => 1,
-            OpCode::Ld => 2,
-            OpCode::St => 3,
-            OpCode::Jsr => 4,
-            OpCode::And => 5,
-            OpCode::Ldr => 6,
-            OpCode::Str => 7,
-            OpCode::Rti => 8,
-            OpCode::Not => 9,
-            OpCode::Ldi => 10,
-            OpCode::Sti => 11,
-            OpCode::Jmp => 12,
-            OpCode::Res => 13,
-            OpCode::Lea => 14,
-            OpCode::Trap => 15,
+impl TryFrom<u16> for OpCode {
+    type Error = VMError;
+
+    fn try_from(value: u16) -> Result<Self, Self::Error> {
+        match value {
+            0b0000 => Ok(OpCode::Br),
+            0b0001 => Ok(OpCode::Add),
+            0b0010 => Ok(OpCode::Ld),
+            0b0011 => Ok(OpCode::St),
+            0b0100 => Ok(OpCode::Jsr),
+            0b0101 => Ok(OpCode::And),
+            0b0110 => Ok(OpCode::Ldr),
+            0b0111 => Ok(OpCode::Str),
+            0b1001 => Ok(OpCode::Not),
+            0b1010 => Ok(OpCode::Ldi),
+            0b1011 => Ok(OpCode::Sti),
+            0b1100 => Ok(OpCode::Jmp),
+            0b1110 => Ok(OpCode::Lea),
+            0b1111 => Ok(OpCode::Trap),
+            _ => Err(VMError::Conversion),
         }
     }
 }
