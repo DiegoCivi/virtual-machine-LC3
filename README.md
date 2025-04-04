@@ -10,6 +10,21 @@ Regarding the LC-3 architecture:
 
 _"Our VM will simulate the LC-3, an educational computer architecture commonly used to teach university students computer architecture and assembly. It has a simplified instruction set compared to x86, but demonstrates the main ideas used by modern CPUs."_
 
+## How to
+
+To run the 2048 game on the VM you must run:
+```sh
+make
+```
+To run the rogue game on the VM you must run:
+```sh
+make rogue
+```
+To run the tests you must run:
+```sh
+make test
+```
+
 ## Uses
 
 Rust 1.85.0
