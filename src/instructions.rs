@@ -1,10 +1,10 @@
-use std::io::{stdin, stdout};
 use crate::{
     error::VMError,
     hardware::{Memory, Register, Registers},
     trap_routines::{TrapCode, get_c, halt, out, puts, puts_p, trap_in},
     utils::{sign_extend, update_flags},
 };
+use std::io::{stdin, stdout};
 
 const ONE_BIT_MASK: u16 = 0b1;
 const THREE_BIT_MASK: u16 = 0b111;
