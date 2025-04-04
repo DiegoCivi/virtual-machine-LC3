@@ -134,7 +134,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn get_c_modifies_R0_with_input_char() {
+    fn get_c_modifies_register_0_with_input_char() {
         let char = "c";
         let char_bytes: u16 = char.as_bytes()[0].into();
         let mut reader = Cursor::new(char);
@@ -145,7 +145,7 @@ mod tests {
     }
 
     #[test]
-    fn trap_out_writes_R0_value() {
+    fn trap_out_writes_register_0_value() {
         let char = "c";
         let char_bytes: u16 = char.as_bytes()[0].into();
         let mut writer: Vec<u8> = Vec::new();
@@ -158,7 +158,7 @@ mod tests {
     }
 
     #[test]
-    fn trap_in_writes_R0_with_reader_value() {
+    fn trap_in_writes_register_0_with_reader_value() {
         let char = "c";
         let char_bytes: u16 = char.as_bytes()[0].into();
         let mut reader = Cursor::new(char);
@@ -170,7 +170,7 @@ mod tests {
     }
 
     #[test]
-    fn trap_in_writes_writer_with__value() {
+    fn trap_in_writes_writer_with_value() {
         let char = "c";
         let char_bytes: u16 = char.as_bytes()[0].into();
         let mut reader = Cursor::new(char);
