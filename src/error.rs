@@ -1,13 +1,13 @@
 #[derive(Debug)]
 pub enum VMError {
-    Arithmetic,
-    Conversion,
-    InvalidIndex,
-    STDINRead,
-    STDOUTWrite,
-    STDOUTFlush,
-    TermiosCreation,
-    TermiosSetup,
-    OpenFile,
-    NoMoreBytes,
+    Arithmetic(String),
+    Conversion(String),
+    InvalidIndex(String),
+    STDINRead(String),
+    STDOUTWrite(String),
+    STDOUTFlush(String),
+    TermiosCreation(String),
+    TermiosSetup(String),
+    OpenFile(String),
+    NoMoreBytes(String),
 }
