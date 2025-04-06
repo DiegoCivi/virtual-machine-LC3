@@ -1,7 +1,7 @@
 use std::{
     env::Args,
     fs,
-    io::{stdin, Error, Read, Write},
+    io::{Error, Read, Write, stdin},
     os::fd::AsRawFd,
     process::exit,
 };
@@ -18,7 +18,11 @@ use crate::{
 /// the original number
 pub fn sign_extend(mut x: u16, bit_count: usize) -> Result<u16, VMError> {
     // Get MSB and check if it is a 1
-    let bitcount_sub = bit_count.checked_sub(1).ok_or(VMError::Arithmetic(String::from("Underflow when substracting")))?;
+    let bitcount_sub = bit_count
+        .checked_sub(1)
+        .ok_or(VMError::Arithmetic(String::from(
+            "Underflow when substracting",
+        )))?;
     let msb = x >> bitcount_sub;
     if msb != 0 {
         // If the MSB is 1 it means it is negative, else its positive
@@ -43,7 +47,7 @@ pub fn getchar(reader: &mut impl Read) -> Result<[u8; 1], VMError> {
     let mut buffer = [0u8; 1];
     reader
         .read_exact(&mut buffer)
-        .map_err(|e: Error| VMError::STDINRead(String::from(e.to_string())))?;
+        .map_err(|e: Error| VMError::STDINRead(e.to_string()))?;
     Ok(buffer)
 }
 
@@ -53,7 +57,9 @@ pub fn getchar(reader: &mut impl Read) -> Result<[u8; 1], VMError> {
 ///
 /// A Result indicating if the flushing succeded or not
 pub fn stdout_flush(writer: &mut impl Write) -> Result<(), VMError> {
-    writer.flush().map_err(|_| VMError::STDOUTFlush(String::from("Cannot flush stdout")))?;
+    writer
+        .flush()
+        .map_err(|_| VMError::STDOUTFlush(String::from("Cannot flush stdout")))?;
     Ok(())
 }
 
@@ -63,7 +69,9 @@ pub fn stdout_flush(writer: &mut impl Write) -> Result<(), VMError> {
 ///
 /// A Result indicating if the writting succeded or not
 pub fn stdout_write(buffer: &[u8], writer: &mut impl Write) -> Result<(), VMError> {
-    writer.write_all(buffer).map_err(|_| VMError::STDOUTWrite(String::from("Cannot write on stdout")))?;
+    writer
+        .write_all(buffer)
+        .map_err(|_| VMError::STDOUTWrite(String::from("Cannot write on stdout")))?;
     Ok(())
 }
 
@@ -76,17 +84,22 @@ pub fn setup() -> Result<Termios, VMError> {
 /// Restores the termios to the original one
 pub fn shutdown(initial_termios: Termios) -> Result<(), VMError> {
     let stdin_fd = stdin().lock().as_raw_fd();
-    tcsetattr(stdin_fd, TCSANOW, &initial_termios).map_err(|_| VMError::TermiosSetup(String::from("Cannot set termios when shutting down")))?;
+    tcsetattr(stdin_fd, TCSANOW, &initial_termios).map_err(|_| {
+        VMError::TermiosSetup(String::from("Cannot set termios when shutting down"))
+    })?;
     Ok(())
 }
 
 /// Gets the initial termios and disables its input buffering
 fn disable_input_buffering() -> Result<Termios, VMError> {
     let stdin_fd = stdin().lock().as_raw_fd();
-    let initial_termios = Termios::from_fd(stdin_fd).map_err(|_| VMError::TermiosCreation(String::from("Cannot create termios")))?;
+    let initial_termios = Termios::from_fd(stdin_fd)
+        .map_err(|_| VMError::TermiosCreation(String::from("Cannot create termios")))?;
     let mut new_termios = initial_termios;
     new_termios.c_lflag &= !ICANON & !ECHO;
-    tcsetattr(stdin_fd, TCSANOW, &new_termios).map_err(|_| VMError::TermiosSetup(String::from("Cannot set termios with new attributes")))?;
+    tcsetattr(stdin_fd, TCSANOW, &new_termios).map_err(|_| {
+        VMError::TermiosSetup(String::from("Cannot set termios with new attributes"))
+    })?;
     Ok(initial_termios)
 }
 
@@ -109,7 +122,7 @@ pub fn load_arguments(args: &mut Args, mem: &mut Memory) -> Result<(), VMError> 
 
 /// Read bytes from file and send them to get into memory
 fn read_image(path: String, mem: &mut Memory) -> Result<(), VMError> {
-    let mut f = fs::read(path).map_err(|e: Error| VMError::OpenFile(String::from(e.to_string())))?;
+    let mut f = fs::read(path).map_err(|e: Error| VMError::OpenFile(e.to_string()))?;
     read_image_file(&mut f, mem)?;
     Ok(())
 }
@@ -126,8 +139,12 @@ fn read_image_file(file_bytes: &mut Vec<u8>, mem: &mut Memory) -> Result<(), VME
     let mut mem_addr = origin;
     for chunk in file_bytes.chunks(2) {
         let mut chunk_iter = chunk.iter();
-        let byte0 = *chunk_iter.next().ok_or(VMError::NoMoreBytes(String::from("No byte0 on chunk")))?;
-        let byte1 = *chunk_iter.next().ok_or(VMError::NoMoreBytes(String::from("No byte1 in chunk")))?;
+        let byte0 = *chunk_iter
+            .next()
+            .ok_or(VMError::NoMoreBytes(String::from("No byte0 on chunk")))?;
+        let byte1 = *chunk_iter
+            .next()
+            .ok_or(VMError::NoMoreBytes(String::from("No byte1 in chunk")))?;
         let data = u16::from_be_bytes([byte0, byte1]);
 
         mem.write(mem_addr, data)?;
