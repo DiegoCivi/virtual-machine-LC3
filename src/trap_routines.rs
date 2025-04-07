@@ -3,7 +3,10 @@ use crate::{
     hardware::{Memory, Register, Registers},
     utils::{getchar, stdout_flush, stdout_write, update_flags},
 };
-use std::io::{Read, Write};
+use std::{
+    io::{Read, Write},
+    num::TryFromIntError,
+};
 
 const NULL: u16 = 0x0000;
 
@@ -27,7 +30,9 @@ impl TryFrom<u16> for TrapCode {
             0x23 => Ok(TrapCode::In),
             0x24 => Ok(TrapCode::PutsP),
             0x25 => Ok(TrapCode::Halt),
-            _ => Err(VMError::Conversion),
+            _ => Err(VMError::Conversion(String::from(
+                "Invalid u16 for TrapCode conversion",
+            ))),
         }
     }
 }
@@ -45,7 +50,7 @@ pub fn get_c(regs: &mut Registers, reader: &mut impl Read) -> Result<(), VMError
 pub fn out(regs: &mut Registers, writer: &mut impl Write) -> Result<(), VMError> {
     let c: u8 = regs[Register::R0]
         .try_into()
-        .map_err(|_| VMError::Conversion)?;
+        .map_err(|e: TryFromIntError| VMError::Conversion(e.to_string()))?;
     stdout_write(&[c], writer)?;
     Ok(())
 }
@@ -78,7 +83,9 @@ pub fn puts(
     let mut c = mem.read(c_addr)?;
     while c != NULL {
         // Parse it into a u8, write it and pass to the next memory location
-        let char: u8 = c.try_into().map_err(|_| VMError::Conversion)?;
+        let char: u8 = c
+            .try_into()
+            .map_err(|e: TryFromIntError| VMError::Conversion(e.to_string()))?;
         stdout_write(&[char], writer)?;
         c_addr = c_addr.wrapping_add(1);
         c = mem.read(c_addr)?;
@@ -100,10 +107,14 @@ pub fn puts_p(
     let mut c = mem.read(c_addr)?;
     while c != NULL {
         // Get the first character in the memory location (the 8 leftmost bits)
-        let char1 = (c & 0xFF).try_into().map_err(|_| VMError::Conversion)?;
+        let char1 = (c & 0xFF)
+            .try_into()
+            .map_err(|e: TryFromIntError| VMError::Conversion(e.to_string()))?;
         stdout_write(&[char1], writer)?;
         // Get the second character in the same memory location (the 8 rightmost bits)
-        let char2 = (c >> 8).try_into().map_err(|_| VMError::Conversion)?;
+        let char2 = (c >> 8)
+            .try_into()
+            .map_err(|e: TryFromIntError| VMError::Conversion(e.to_string()))?;
         if char2 != 0x00 {
             stdout_write(&[char2], writer)?;
         }

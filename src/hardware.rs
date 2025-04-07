@@ -37,7 +37,9 @@ impl Memory {
             *val = new_val;
             return Ok(());
         }
-        Err(VMError::InvalidIndex)
+        Err(VMError::InvalidIndex(String::from(
+            "Invalid index when writing on memory",
+        )))
     }
 
     /// Reads a memory address. Also checks whether a key was pressed and it
@@ -65,7 +67,9 @@ impl Memory {
         if let Some(val) = self.inner.get(index) {
             return Ok(*val);
         }
-        Err(VMError::InvalidIndex)
+        Err(VMError::InvalidIndex(String::from(
+            "Invalid index when writing on memory",
+        )))
     }
 }
 
@@ -116,7 +120,9 @@ impl Register {
             7 => Ok(Register::R7),
             8 => Ok(Register::PC),
             9 => Ok(Register::Cond),
-            _ => Err(VMError::Conversion),
+            _ => Err(VMError::Conversion(String::from(
+                "Invalid u16 for Register conversion",
+            ))),
         }
     }
 }
@@ -190,7 +196,9 @@ impl TryFrom<u16> for OpCode {
             0b1100 => Ok(OpCode::Jmp),
             0b1110 => Ok(OpCode::Lea),
             0b1111 => Ok(OpCode::Trap),
-            _ => Err(VMError::Conversion),
+            _ => Err(VMError::Conversion(String::from(
+                "Invalid u16 for OpcCode conversion",
+            ))),
         }
     }
 }
