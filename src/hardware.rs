@@ -3,10 +3,7 @@ use std::{
     ops::{Index, IndexMut},
 };
 
-use crate::{
-    error::VMError,
-    utils::{check_key, getchar},
-};
+use crate::{error::VMError, utils::getchar};
 
 const MEMORY_MAX: usize = 65535;
 const REGS_COUNT: usize = 10;
@@ -57,15 +54,11 @@ impl Memory {
     /// the operation failed
     pub fn read(&mut self, addr: u16) -> Result<u16, VMError> {
         if addr == MemoryRegister::KeyboardStatus {
-            if check_key() {
-                self.write(MemoryRegister::KeyboardStatus, 1 << 15)?;
-                let mut reader = stdin();
-                let buffer = getchar(&mut reader)?;
-                let char: u16 = buffer[0].into();
-                self.write(MemoryRegister::KeyboardData, char)?;
-            } else {
-                self.write(MemoryRegister::KeyboardStatus, 0)?;
-            }
+            self.write(MemoryRegister::KeyboardStatus, 1 << 15)?;
+            let mut reader = stdin();
+            let buffer = getchar(&mut reader)?;
+            let char: u16 = buffer[0].into();
+            self.write(MemoryRegister::KeyboardData, char)?;
         }
         // Get the value
         let index: usize = addr.into();

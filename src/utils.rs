@@ -47,24 +47,6 @@ pub fn getchar(reader: &mut impl Read) -> Result<[u8; 1], VMError> {
     Ok(buffer)
 }
 
-/// Checks if there is something to read on the standard input
-///
-/// ### Returns
-///
-/// A bool indicating where there is something to read or not
-pub fn check_key() -> bool {
-    let mut stdin = stdin().bytes().peekable();
-    match stdin.peek() {
-        Some(Ok(n)) => {
-            if *n > 0 {
-                return true;
-            }
-            false
-        }
-        _ => false,
-    }
-}
-
 /// Flushes the writer
 ///
 /// ### Returns
