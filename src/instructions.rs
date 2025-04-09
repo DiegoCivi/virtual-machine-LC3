@@ -99,8 +99,9 @@ pub fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     Ok(())
 }
 
-/// Changes the PC register if the Cond register is set to the
-/// flag that is selected on the encoding of the instruction
+/// Changes the PC register value depending on the value of the Cond register.
+/// If the Cond register is set to the same value taken from the bits 9 to 11 of the instruction,
+/// this function adds the PC register to the value taken from the first 9 bits of the instruction. 
 ///
 /// ### Arguments
 ///
