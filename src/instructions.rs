@@ -16,10 +16,10 @@ const ELEVEN_BIT_MASK: u16 = 0b111_1111_1111;
 
 /// Adds two values and stores the result in a register
 ///
-/// This instruction can happen in two different ways. One is
-/// by adding two elements that are in a register each, this is called
-/// register mode. The other mode, known as immediate mode, is to add the value of a register
-/// with the one that is embedded in the instruction itself.
+/// This instruction can be executed in two different ways:
+///
+/// - Register mode: Adds two values taken from the registers storage.
+/// - Immediate mode: Adds a value taken from the registers storage with one taken from the instruction itself. The second operand of the addition is taken from a range of bits of the executed instruction.
 ///
 /// ### Arguments
 ///
