@@ -99,7 +99,7 @@ pub fn shutdown(initial_termios: Termios) -> Result<(), VMError> {
     Ok(())
 }
 
-/// Load the file into the vm memory
+/// Loads the file into the vm memory
 pub fn load_arguments(args: &mut Args, mem: &mut Memory) -> Result<(), VMError> {
     if args.len() < 2 {
         println!("lc3 [image-file1] ...");
@@ -116,7 +116,7 @@ pub fn load_arguments(args: &mut Args, mem: &mut Memory) -> Result<(), VMError> 
     Ok(())
 }
 
-/// Read bytes from file and send them to get into memory
+/// Reads bytes from file and send them to get into memory
 fn read_image(path: String, mem: &mut Memory) -> Result<(), VMError> {
     let mut f = fs::read(path).map_err(|e: Error| VMError::OpenFile(e.to_string()))?;
     read_image_file(&mut f, mem)?;

@@ -246,14 +246,14 @@ impl From<MemoryRegister> for usize {
     }
 }
 
-/// Allows us to compare an u16 with a MemoryRegister
+/// Allows comparison of an u16 with a MemoryRegister
 impl PartialEq<MemoryRegister> for u16 {
     fn eq(&self, mem_reg: &MemoryRegister) -> bool {
         *self == mem_reg.address()
     }
 }
 
-/// Allows us to compare a MemoryRegister with an u16
+/// Allows comparison of a MemoryRegister with an u16
 impl PartialEq<u16> for MemoryRegister {
     fn eq(&self, num: &u16) -> bool {
         self.address() == *num

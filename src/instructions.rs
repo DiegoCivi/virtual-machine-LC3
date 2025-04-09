@@ -14,7 +14,7 @@ const EIGHT_BIT_MASK: u16 = 0b1111_1111;
 const NINE_BIT_MASK: u16 = 0b1_1111_1111;
 const ELEVEN_BIT_MASK: u16 = 0b111_1111_1111;
 
-/// Adds to values and stores the result in a register
+/// Adds two values and stores the result in a register
 ///
 /// This instruction can happen in two different ways. One is
 /// by adding two elements that are in a register each, this is called
