@@ -25,13 +25,13 @@ pub fn sign_extend(mut x: u16, bit_count: usize) -> Result<u16, VMError> {
         )))?;
     let msb = x >> bitcount_sub;
     if msb != 0 {
-        // If the MSB is 1 it means it is negative, else its positive
+        // If the MSB is 1 it means it is negative, else it is positive
         x |= 0xFFFF << bit_count;
     }
     Ok(x)
 }
 
-/// It updates the register COND where we have the condition flag
+/// Updates the register COND where we have the condition flag
 pub fn update_flags(r: Register, regs: &mut Registers) {
     if regs[r] == 0 {
         regs[Register::Cond] = CondFlag::Zro.value();
@@ -42,7 +42,7 @@ pub fn update_flags(r: Register, regs: &mut Registers) {
     }
 }
 
-/// Reads one byte from the standard input
+/// Reads one byte from the stdin
 pub fn getchar(reader: &mut impl Read) -> Result<[u8; 1], VMError> {
     let mut buffer = [0u8; 1];
     reader

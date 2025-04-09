@@ -18,9 +18,12 @@ fn main() -> Result<(), VMError> {
     // Hardware creation
     let mut regs = Registers::new();
     let mut mem = Memory::new();
-    // Load Arguments
+    // Read the file with the instructions to execute into the VM's memory
     load_arguments(&mut args, &mut mem)?;
-    // Setup
+    // Setup of:
+    // - Terminal
+    // - Register Cond: It is set to the Zro flag so as to set a value
+    // - Program Counter: It is set to the PC_START which is a default address
     let termios = setup()?;
     regs[Register::Cond] = CondFlag::Zro.value();
     regs[Register::PC] = PC_START;
@@ -50,7 +53,7 @@ fn main() -> Result<(), VMError> {
         }
     }
 
-    // Shutdown
+    // Reset the terminal to its original settings
     shutdown(termios)?;
     Ok(())
 }

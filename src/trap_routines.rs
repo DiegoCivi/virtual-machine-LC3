@@ -37,7 +37,7 @@ impl TryFrom<u16> for TrapCode {
     }
 }
 
-/// Read one character from the stdin.
+/// Reads one character from the stdin.
 pub fn get_c(regs: &mut Registers, reader: &mut impl Read) -> Result<(), VMError> {
     let buffer = getchar(reader)?;
     let char: u16 = buffer[0].into();
@@ -46,7 +46,7 @@ pub fn get_c(regs: &mut Registers, reader: &mut impl Read) -> Result<(), VMError
     Ok(())
 }
 
-/// Output a single character.
+/// Writes a single character into stdout.
 pub fn out(regs: &mut Registers, writer: &mut impl Write) -> Result<(), VMError> {
     let c: u8 = regs[Register::R0]
         .try_into()
@@ -55,7 +55,7 @@ pub fn out(regs: &mut Registers, writer: &mut impl Write) -> Result<(), VMError>
     Ok(())
 }
 
-/// Prompt for input character from the user.
+/// Prompts for input character from the stdin.
 pub fn trap_in(
     regs: &mut Registers,
     writer: &mut impl Write,
@@ -70,7 +70,7 @@ pub fn trap_in(
     Ok(())
 }
 
-/// Output a null-terminated string. The characters are contained in consecutive memory locations,
+/// Writes a null-terminated string into stdout. The characters are contained in consecutive memory locations,
 /// one character per memory location, starting with the address specified in R0. Writing
 /// terminates with the occurrence of x0000 in a memory location.
 pub fn puts(
@@ -94,7 +94,7 @@ pub fn puts(
     Ok(())
 }
 
-/// Output a null-terminated string. The characters are contained in consecutive memory locations,
+/// Writes a null-terminated string into stdout. The characters are contained in consecutive memory locations,
 /// but this time there are two characters per memory location, starting with the address specified in R0. Writing
 /// terminates with the occurrence of x0000 in a memory location.
 pub fn puts_p(
