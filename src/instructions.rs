@@ -231,9 +231,10 @@ pub fn store(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<()
     memory.write(address, new_val)
 }
 
-/// Stores the value that is in a register into an address in memory. This address
+/// Reads a value from a register and stores it into memory. This address
 /// is taken indirectly from the instruction. By adding the PC and the PCoffset9 section
-/// we get the first memory address, then if we read it we get the final address. That
+/// (the rightmost 9 bits of the instruction enconding) we get the first memory 
+/// address, then if we read it we get the final address. That
 /// final address is the one that is going to get written.
 pub fn store_indirect(
     instr: u16,
@@ -253,9 +254,13 @@ pub fn store_indirect(
     memory.write(final_address, new_val)
 }
 
-/// Stores the value that is in a register into an address in memory. By adding
+/// Reads a value from a register and stores it into memory. By adding
 /// the value on the register specified in the BaseR section and the value in the
-/// offset6 section we get the memory address. That address is the one that is going to get written.
+/// offset6 section we get the memory address. That address is the one that
+/// is going to get written.
+/// 
+/// The BaseR and the offset6 sections can be found on the instruction enconding.
+/// The first holds a register to use, the second one holds and embedded value. 
 pub fn store_register(
     instr: u16,
     regs: &mut Registers,
