@@ -13,9 +13,9 @@ use crate::{
     hardware::{CondFlag, Memory, Register, Registers},
 };
 
-/// Extends a number represented in 'bit_count' bits into
-/// 16 bits, always taking into account the sign of
-/// the original number
+/// Takes a number whose size in bits is determined by `bit_count`
+/// and extends it so that its size is 16 bits, always taking into
+/// account the sign of the original number
 pub fn sign_extend(mut x: u16, bit_count: usize) -> Result<u16, VMError> {
     // Get MSB and check if it is a 1
     let bitcount_sub = bit_count
