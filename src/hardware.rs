@@ -5,7 +5,7 @@ use std::{
 
 use crate::{error::VMError, utils::getchar};
 
-const MEMORY_MAX: usize = 65535;
+const MEMORY_MAX: usize = 65536;
 const REGS_COUNT: usize = 10;
 
 /// Abstraction of the memory.
@@ -21,16 +21,17 @@ impl Memory {
         }
     }
 
-    /// Sets a new val the memory address
+    /// Sets a new val in the specified memory address
     ///
     /// ### Arguments
     ///
-    /// - `address`: An u16 representing the memory address to read.
-    /// - `Memory`: A Mmeory struct that handles the memory in the system
+    /// - `mem_address`: A generic that can be converted into an usize and represents the memory address to write on.
+    /// - `new_val`: The new val to write on the specified memory address.
     ///
     /// ### Returns
     ///
-    /// A Result indicating whether the operation failed or not
+    /// A Result indicating whether the operation failed or not. This operation can fail if the address
+    /// to write on is an invalid one. An address is invalid if it is not in [0, 65535].
     pub fn write<T: Into<usize>>(&mut self, mem_address: T, new_val: u16) -> Result<(), VMError> {
         let index: usize = mem_address.into();
         if let Some(val) = self.inner.get_mut(index) {
@@ -42,18 +43,20 @@ impl Memory {
         )))
     }
 
-    /// Reads a memory address. Also checks whether a key was pressed and it
-    /// that case it stores which key was pressed.
+    /// Reads a memory address. If the memory address to read is the one that stores
+    /// the KeyboardStatus, then it updates the KeyboardData address in the memory
+    /// by writing the character that was read from standard input.
     ///
     /// ### Arguments
     ///
-    /// - `address`: An u16 representing the memory address to read.
-    /// - `Memory`: A Mmeory struct that handles the memory in the system
+    /// - `addr`: An u16 representing the memory address to read from.
     ///
     /// ### Returns
     ///
     /// A Result containing the data in the memory address, or a VMError if
-    /// the operation failed
+    /// the operation failed. The operation can fail if writing in the memory fails
+    /// (writtings are done when a character was read from stdin) or because
+    /// the address is an invalid one and is not in the range [0, 65535].
     pub fn read(&mut self, addr: u16) -> Result<u16, VMError> {
         if addr == MemoryRegister::KeyboardStatus {
             self.write(MemoryRegister::KeyboardStatus, 1 << 15)?;
@@ -206,9 +209,9 @@ impl TryFrom<u16> for OpCode {
 /// Condition flags that indicate
 /// the result of the previous calculation
 pub enum CondFlag {
-    Pos = 1 << 0,
-    Zro = 1 << 1,
-    Neg = 1 << 2,
+    Pos,
+    Zro,
+    Neg,
 }
 
 impl CondFlag {

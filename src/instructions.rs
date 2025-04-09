@@ -67,10 +67,10 @@ pub fn not(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 /// Does the bitwise 'AND' between two values and stores the result
 /// in a register.
 ///
-/// This instruction can happen in two different ways. One is
-/// by doing it with two elements that are in a register each,
-/// this is called register mode. The other mode is to use the value
-/// of a register with the one that is embedded in the instruction itself.
+/// This instruction can be executed in two different ways:
+/// - register mode: Bitwise and with two elements that are in a register each. 
+/// - immediate mode: Uses the value of a register with the one that 
+/// is embedded in the instruction itself.
 ///
 /// ### Arguments
 ///
@@ -112,7 +112,7 @@ pub fn branch(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     let mut pc_offset = instr & NINE_BIT_MASK;
     pc_offset = sign_extend(pc_offset, 9)?;
     // Get the Condition Flag and check if it is the same
-    // as the one selcted on the instruction
+    // as the one selected on the instruction
     let cond_flag = (instr >> 9) & THREE_BIT_MASK;
     let coincides = cond_flag & regs[Register::Cond];
     if coincides != 0 {
@@ -121,7 +121,8 @@ pub fn branch(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     Ok(())
 }
 
-/// Changes the PC with the value of a specified register
+/// Changes the PC with the value of a register specified in the instruction
+/// itself
 pub fn jump(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     // Get the BaseR section
     let baser_r = Register::from_u16((instr >> 6) & THREE_BIT_MASK)?;
@@ -129,11 +130,11 @@ pub fn jump(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     Ok(())
 }
 
-/// Changes the PC register with the value specified on a register or
-/// in the same instruction encoding. This depends on the long flag
-/// situated in the bit 11. The long flag being set means it can be a value
-/// of eleven bits. If the flags is not set, the value is taken from
-/// a register.
+/// Changes the PC register with the value on a register that is specified
+/// on the R1 section of the encoding or in the same instruction encoding.
+/// This depends on the long flag situated in the bit 11. The long flag
+/// being set means it can be a value of eleven bits. If the flags is not
+/// set, the value is taken from a register.
 pub fn jump_register(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     let long_flag = (instr >> 11) & 1;
     regs[Register::R7] = regs[Register::PC];
@@ -155,6 +156,7 @@ pub fn jump_register(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 ///
 /// - `instr`: An u16 that has the encoding of the whole instruction to execute.
 /// - `regs`: A Registers struct that handles each register.
+/// - `memory`: A Memory struct that handles reads and writes on the vm memory.
 pub fn load_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Destination register
     let dr = Register::from_u16((instr >> 9) & THREE_BIT_MASK)?;
@@ -170,7 +172,7 @@ pub fn load_indirect(instr: u16, regs: &mut Registers, memory: &mut Memory) -> R
     Ok(())
 }
 
-/// Loads a value from a location in memory into a register
+/// Loads a value from a location in memory and stores the loaded value into a register
 pub fn load(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Destination register
     let dr = Register::from_u16((instr >> 9) & THREE_BIT_MASK)?;
@@ -215,7 +217,7 @@ pub fn load_effective_address(instr: u16, regs: &mut Registers) -> Result<(), VM
     Ok(())
 }
 
-/// Stores the value that is in a register into an address in memory. This address
+/// Reads a value from a register and stores it into memory. This address
 /// is created from the addition of the PC and the PCoffset9 section
 pub fn store(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Source Register
