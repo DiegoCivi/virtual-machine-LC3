@@ -90,7 +90,7 @@ pub fn setup() -> Result<Termios, VMError> {
     Ok(initial_termios)
 }
 
-/// Restores the termios to the original one
+/// Restores the termios to the one set by `initial_termios`
 pub fn shutdown(initial_termios: Termios) -> Result<(), VMError> {
     let stdin_fd = stdin().lock().as_raw_fd();
     tcsetattr(stdin_fd, TCSANOW, &initial_termios).map_err(|_| {
@@ -123,7 +123,12 @@ fn read_image(path: String, mem: &mut Memory) -> Result<(), VMError> {
     Ok(())
 }
 
-/// Gets the bytes from the file into memory
+/// Writes a file encoded in bytes into memory.
+/// 
+/// ### Arguments
+/// 
+/// - `file_bytes`: A vector of u8 which represent each byte of the file with the file that will be written in memory.
+/// - `mem`: A Memory struct that represents the readable and writable memory of the vm.
 fn read_image_file(file_bytes: &mut Vec<u8>, mem: &mut Memory) -> Result<(), VMError> {
     // Get the first 2 bytes and join them in reverse order to get the origin
     let byte0 = file_bytes.remove(0);
