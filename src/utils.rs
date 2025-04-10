@@ -10,11 +10,10 @@ use termios::{ECHO, ICANON, TCSANOW, Termios, tcsetattr};
 /// account the sign of the original number
 pub fn sign_extend(mut x: u16, bit_count: usize) -> Result<u16, VMError> {
     // Get MSB and check if it is a 1
-    let bitcount_sub = bit_count
-        .checked_sub(1)
-        .ok_or(VMError::Arithmetic(String::from(
-            "Underflow when substracting",
-        )))?;
+    let bitcount_sub = bit_count.checked_sub(1).ok_or(VMError::Arithmetic {
+        minuend: 1,
+        subtrahend: bit_count,
+    })?;
     let msb = x >> bitcount_sub;
     if msb != 0 {
         // If the MSB is 1 it means it is negative, else it is positive

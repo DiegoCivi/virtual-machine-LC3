@@ -64,7 +64,8 @@ impl VM {
 
     /// Reads bytes from file and send them to get into memory
     fn read_image(&mut self, path: String) -> Result<(), VMError> {
-        let mut f = fs::read(path).map_err(|e: Error| VMError::OpenFile(e.to_string()))?;
+        let mut f =
+            fs::read(path.clone()).map_err(|e: Error| VMError::OpenFile(path, e.to_string()))?;
         self.read_image_file(&mut f)?;
         Ok(())
     }

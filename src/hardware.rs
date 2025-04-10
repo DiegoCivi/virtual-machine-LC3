@@ -38,9 +38,7 @@ impl Memory {
             *val = new_val;
             return Ok(());
         }
-        Err(VMError::InvalidIndex(String::from(
-            "Invalid index when writing on memory",
-        )))
+        Err(VMError::InvalidIndex(index))
     }
 
     /// Reads a memory address. If the memory address to read is the one that stores
@@ -70,9 +68,7 @@ impl Memory {
         if let Some(val) = self.inner.get(index) {
             return Ok(*val);
         }
-        Err(VMError::InvalidIndex(String::from(
-            "Invalid index when writing on memory",
-        )))
+        Err(VMError::InvalidIndex(index))
     }
 }
 

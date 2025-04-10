@@ -16,8 +16,7 @@ fn main() -> Result<(), VMError> {
     let mut vm = VM::new();
     // Read the file with the instructions to execute into the VM's memory
     vm.load_arguments(&mut args)?;
-    // Setup of:
-    // - Terminal
+    // Setup of Terminal
     let termios = setup()?;
 
     // VM main loop
