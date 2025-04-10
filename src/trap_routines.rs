@@ -126,7 +126,9 @@ pub fn puts_p(
     Ok(())
 }
 
-/// Halt program
+/// Writes on stdout th word 'HALT' to notify the user that the program is stopping
+/// and changes the 'running' flag to false. This is the flag that is used in the
+/// main loop to know if the program needs to continue processing instructions or not.
 pub fn halt(running: &mut bool, writer: &mut impl Write) -> Result<(), VMError> {
     let s = "HALT\n".as_bytes();
     stdout_write(s, writer)?;
