@@ -280,6 +280,10 @@ pub fn store_register(
     memory.write(address, new_val)
 }
 
+/// Executes the desired trap routine. In the instruction encoding the
+/// trapvect8 section can be found in the 8 rightmost bits, and from there
+/// we can get the trap code that will tell us which of the trap routines
+/// we have to execute.
 pub fn trap(
     instr: u16,
     regs: &mut Registers,
