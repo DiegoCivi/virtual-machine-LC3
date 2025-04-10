@@ -124,9 +124,9 @@ fn read_image(path: String, mem: &mut Memory) -> Result<(), VMError> {
 }
 
 /// Writes a file encoded in bytes into memory.
-/// 
+///
 /// ### Arguments
-/// 
+///
 /// - `file_bytes`: A vector of u8 which represent each byte of the file with the file that will be written in memory.
 /// - `mem`: A Memory struct that represents the readable and writable memory of the vm.
 fn read_image_file(file_bytes: &mut Vec<u8>, mem: &mut Memory) -> Result<(), VMError> {

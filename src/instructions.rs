@@ -68,9 +68,9 @@ pub fn not(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 /// in a register.
 ///
 /// This instruction can be executed in two different ways:
-/// - register mode: Bitwise and with two elements that are in a register each. 
-/// - immediate mode: Uses the value of a register with the one that 
-/// is embedded in the instruction itself.
+/// - register mode: Bitwise and with two elements that are in a register each.
+/// - immediate mode: Uses the value of a register with the one that is embedded
+///   in the instruction itself.
 ///
 /// ### Arguments
 ///
@@ -101,7 +101,7 @@ pub fn and(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 
 /// Changes the PC register value depending on the value of the Cond register.
 /// If the Cond register is set to the same value taken from the bits 9 to 11 of the instruction,
-/// this function adds the PC register to the value taken from the first 9 bits of the instruction. 
+/// this function adds the PC register to the value taken from the first 9 bits of the instruction.
 ///
 /// ### Arguments
 ///
@@ -152,7 +152,7 @@ pub fn jump_register(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 }
 
 /// Loads a value into a register using indirect addressing.
-/// First, it computes a memory address by adding a PC offset to the current PC, 
+/// First, it computes a memory address by adding a PC offset to the current PC,
 /// and reads the value at that memory address. This value is treated as the final memory address.
 /// Then, it loads the value stored at that final memory address into the destination register.
 ///
@@ -238,7 +238,7 @@ pub fn store(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<()
 
 /// Reads a value from a register and stores it into memory. This address
 /// is taken indirectly from the instruction. By adding the PC and the PCoffset9 section
-/// (the rightmost 9 bits of the instruction enconding) we get the first memory 
+/// (the rightmost 9 bits of the instruction enconding) we get the first memory
 /// address, then if we read it we get the final address. That
 /// final address is the one that is going to get written.
 pub fn store_indirect(
@@ -263,9 +263,9 @@ pub fn store_indirect(
 /// the value on the register specified in the BaseR section and the value in the
 /// offset6 section we get the memory address. That address is the one that
 /// is going to get written.
-/// 
+///
 /// The BaseR and the offset6 sections can be found on the instruction enconding.
-/// The first holds a register to use, the second one holds and embedded value. 
+/// The first holds a register to use, the second one holds and embedded value.
 pub fn store_register(
     instr: u16,
     regs: &mut Registers,
