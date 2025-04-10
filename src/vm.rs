@@ -1,7 +1,7 @@
 use std::{env::Args, fs, io::{stdin, stdout, Error, Read, Write}, num::TryFromIntError, process::exit};
 
 use crate::{
-    error::VMError, hardware::{CondFlag, Memory, OpCode, Register, Registers}, trap_routines::*, utils::{getchar, sign_extend, stdout_flush, stdout_write}
+    error::VMError, hardware::{CondFlag, Memory, OpCode, Register, Registers}, trap_code::*, utils::{getchar, sign_extend, stdout_flush, stdout_write}
 };
 
 const NULL: u16 = 0x0000;
@@ -518,6 +518,8 @@ impl VM {
 
 #[cfg(test)]
 mod tests {
+    use std::io::Cursor;
+
     use super::*;
 
     #[test]
@@ -641,5 +643,129 @@ mod tests {
         let _ = vm.add(instr);
 
         assert_eq!(vm.regs[Register::Cond], CondFlag::Zro.value());
+    }
+
+    #[test]
+    fn get_c_modifies_register_0_with_input_char() {
+        let char = "c";
+        let char_bytes: u16 = char.as_bytes()[0].into();
+        let mut reader = Cursor::new(char);
+        let mut vm = VM::new();
+        let _ = vm.get_c(&mut reader);
+
+        assert_eq!(vm.regs[Register::R0], char_bytes);
+    }
+
+    #[test]
+    fn trap_out_writes_register_0_value() {
+        let char = "c";
+        let char_bytes: u16 = char.as_bytes()[0].into();
+        let mut writer: Vec<u8> = Vec::new();
+        let mut vm = VM::new();
+        vm.regs[Register::R0] = char_bytes;
+        let _ = vm.out(&mut writer);
+
+        let written_val: u16 = writer[0].into();
+        assert_eq!(written_val, char_bytes);
+    }
+
+    #[test]
+    fn trap_in_writes_register_0_with_reader_value() {
+        let char = "c";
+        let char_bytes: u16 = char.as_bytes()[0].into();
+        let mut reader = Cursor::new(char);
+        let mut writer: Vec<u8> = Vec::new();
+        let mut vm = VM::new();
+        let _ = vm.trap_in(&mut writer, &mut reader);
+
+        assert_eq!(vm.regs[Register::R0], char_bytes);
+    }
+
+    #[test]
+    fn trap_in_writes_writer_with_value() {
+        let char = "c";
+        let char_bytes: u16 = char.as_bytes()[0].into();
+        let mut reader = Cursor::new(char);
+        let mut writer: Vec<u8> = Vec::new();
+        let mut vm = VM::new();
+        let _ = vm.trap_in(&mut writer, &mut reader);
+
+        let written_val: u16 = writer[0].into();
+        assert_eq!(written_val, char_bytes);
+    }
+
+    #[test]
+    fn puts_writes_whole_string_on_writer() {
+        let mut writer: Vec<u8> = Vec::new();
+        let (char1, char2, char3) = ("1", "2", "3");
+        let char1_bytes: u16 = char1.as_bytes()[0].into();
+        let char2_bytes: u16 = char2.as_bytes()[0].into();
+        let char3_bytes: u16 = char3.as_bytes()[0].into();
+        let starting_address: u16 = 0x0005;
+
+        let mut vm = VM::new();
+        vm.regs[Register::R0] = starting_address;
+        let _ = vm.mem.write(starting_address, char1_bytes);
+        let _ = vm.mem.write(starting_address + 1, char2_bytes);
+        let _ = vm.mem.write(starting_address + 2, char3_bytes);
+
+        let _ = vm.puts(&mut writer);
+
+        let written_val_1: u16 = writer[0].into();
+        let written_val_2: u16 = writer[1].into();
+        let written_val_3: u16 = writer[2].into();
+        assert_eq!(written_val_1, char1_bytes);
+        assert_eq!(written_val_2, char2_bytes);
+        assert_eq!(written_val_3, char3_bytes);
+    }
+
+    #[test]
+    fn halt_changes_bool() {
+        let mut vm = VM::new();
+        let mut writer: Vec<u8> = Vec::new();
+
+        let _ = vm.halt(&mut writer);
+
+        assert!(!vm.running);
+    }
+
+    #[test]
+    fn halt_writes_on_writer() {
+        let mut vm = VM::new();
+        let mut writer: Vec<u8> = Vec::new();
+        let expected_bytes = "HALT\n".as_bytes();
+        let _ = vm.halt(&mut writer);
+
+        assert_eq!(writer, expected_bytes);
+    }
+
+    #[test]
+    fn puts_p_run_writes_on_writer() {
+        let mut writer: Vec<u8> = Vec::new();
+        let (char1, char2, char3, char4) = ("1", "2", "3", "4");
+        let char1_bytes: u16 = char1.as_bytes()[0].into();
+        let char2_bytes: u16 = char2.as_bytes()[0].into();
+        let char3_bytes: u16 = char3.as_bytes()[0].into();
+        let char4_bytes: u16 = char4.as_bytes()[0].into();
+
+        let memory_location1: u16 = (char2_bytes << 8) | char1_bytes;
+        let memory_location2: u16 = (char4_bytes << 8) | char3_bytes;
+
+        let starting_address: u16 = 0x0005;
+        let mut vm = VM::new();
+        vm.regs[Register::R0] = starting_address;
+        let _ = vm.mem.write(starting_address, memory_location1);
+        let _ = vm.mem.write(starting_address + 1, memory_location2);
+
+        let _ = vm.puts_p(&mut writer);
+
+        let written_val_1: u16 = writer[0].into();
+        let written_val_2: u16 = writer[1].into();
+        let written_val_3: u16 = writer[2].into();
+        let written_val_4: u16 = writer[3].into();
+        assert_eq!(written_val_1, char1_bytes);
+        assert_eq!(written_val_2, char2_bytes);
+        assert_eq!(written_val_3, char3_bytes);
+        assert_eq!(written_val_4, char4_bytes);
     }
 }
