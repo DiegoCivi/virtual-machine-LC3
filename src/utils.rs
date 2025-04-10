@@ -102,32 +102,32 @@ pub fn shutdown(initial_termios: Termios) -> Result<(), VMError> {
 
 //     use super::*;
 
-    // #[test]
-    // /// Test if the data is written in the memory, starting from
-    // /// the indicated address and with the data in the correct
-    // /// endianess
-    // fn read_image_file_writes_memory_correctly() {
-    //     let mut data: Vec<u8> = vec![0xFA, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06];
-    //     let mut mem = Memory::new();
-    //     read_image_file(&mut data, &mut mem).unwrap();
+// #[test]
+// /// Test if the data is written in the memory, starting from
+// /// the indicated address and with the data in the correct
+// /// endianess
+// fn read_image_file_writes_memory_correctly() {
+//     let mut data: Vec<u8> = vec![0xFA, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06];
+//     let mut mem = Memory::new();
+//     read_image_file(&mut data, &mut mem).unwrap();
 
-    //     let origin = 0xFA00;
-    //     assert_eq!(mem.read(origin).unwrap(), 0x0102);
-    //     assert_eq!(mem.read(origin + 1).unwrap(), 0x0304);
-    //     assert_eq!(mem.read(origin + 2).unwrap(), 0x0506);
-    // }
+//     let origin = 0xFA00;
+//     assert_eq!(mem.read(origin).unwrap(), 0x0102);
+//     assert_eq!(mem.read(origin + 1).unwrap(), 0x0304);
+//     assert_eq!(mem.read(origin + 2).unwrap(), 0x0506);
+// }
 
-    // #[test]
-    // /// Test if the data is written in the memory, starting from
-    // /// the indicated address and with the data in the correct
-    // /// endianess when opening a file
-    // fn read_image_reads_file_correctly_into_memory() {
-    //     let mut mem = Memory::new();
-    //     let _ = read_image("test_files/bytes.bin".to_string(), &mut mem);
+// #[test]
+// /// Test if the data is written in the memory, starting from
+// /// the indicated address and with the data in the correct
+// /// endianess when opening a file
+// fn read_image_reads_file_correctly_into_memory() {
+//     let mut mem = Memory::new();
+//     let _ = read_image("test_files/bytes.bin".to_string(), &mut mem);
 
-    //     let origin = 0xFA00;
-    //     assert_eq!(mem.read(origin).unwrap(), 0x0102);
-    //     assert_eq!(mem.read(origin + 1).unwrap(), 0x0304);
-    //     assert_eq!(mem.read(origin + 2).unwrap(), 0x0506);
-    // }
+//     let origin = 0xFA00;
+//     assert_eq!(mem.read(origin).unwrap(), 0x0102);
+//     assert_eq!(mem.read(origin + 1).unwrap(), 0x0304);
+//     assert_eq!(mem.read(origin + 2).unwrap(), 0x0506);
+// }
 // }

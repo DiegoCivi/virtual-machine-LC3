@@ -1,9 +1,12 @@
 use std::{env::Args, fs, io::Error, process::exit};
 
-use crate::{error::VMError, hardware::{CondFlag, Memory, OpCode, Register, Registers}, instructions::*};
+use crate::{
+    error::VMError,
+    hardware::{CondFlag, Memory, OpCode, Register, Registers},
+    instructions::*,
+};
 
 const PC_START: u16 = 0x3000;
-
 
 pub struct VM {
     mem: Memory,
@@ -12,7 +15,6 @@ pub struct VM {
 }
 
 impl VM {
-
     /// Creates a new instance of the VM abstraction
     pub fn new() -> Self {
         let mut regs = Registers::new();
@@ -62,7 +64,7 @@ impl VM {
         let byte0 = file_bytes.remove(0);
         let byte1 = file_bytes.remove(0);
         let origin = u16::from_be_bytes([byte0, byte1]);
-    
+
         // Get chunks of 2 bytes and join them in reverse order so we get the data.
         // This data starts to get written from memory address = origin
         let mut mem_addr = origin;
@@ -75,7 +77,7 @@ impl VM {
                 .next()
                 .ok_or(VMError::NoMoreBytes(String::from("No byte1 in chunk")))?;
             let data = u16::from_be_bytes([byte0, byte1]);
-    
+
             self.mem.write(mem_addr, data)?;
             mem_addr = mem_addr.wrapping_add(1);
         }
