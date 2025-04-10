@@ -2,13 +2,8 @@ use std::{
     io::{Error, Read, Write, stdin},
     os::fd::AsRawFd,
 };
-
 use termios::{ECHO, ICANON, TCSANOW, Termios, tcsetattr};
-
-use crate::{
-    error::VMError,
-    hardware::{CondFlag, Register, Registers},
-};
+use crate::error::VMError;
 
 /// Takes a number whose size in bits is determined by `bit_count`
 /// and extends it so that its size is 16 bits, always taking into

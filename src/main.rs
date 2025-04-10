@@ -6,7 +6,6 @@ use vm::VM;
 
 mod error;
 mod hardware;
-mod instructions;
 mod trap_code;
 mod utils;
 mod vm;
