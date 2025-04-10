@@ -1,0 +1,27 @@
+[package]
+name = "vm"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+termios = "0.3.3"
+
+[lints.rust]
+unsafe_code = "forbid"
+warnings = "warn"
+rust_2018_idioms = { level = "warn", priority = -1 }
+
+[lints.clippy]
+panic = "deny"
+unnecessary_cast = "warn"
+deref_by_slicing = "warn"
+indexing_slicing = "warn"
+manual_unwrap_or = "warn"
+manual_unwrap_or_default = "warn"
+as_conversions = "deny"
+unwrap_used = "deny"
+expect_used = "deny"
+
+arithmetic_side_effects = "deny"
+panicking_overflow_checks = "warn"
+manual_saturating_arithmetic = "warn"
