@@ -1,9 +1,9 @@
+use crate::error::VMError;
 use std::{
     io::{Error, Read, Write, stdin},
     os::fd::AsRawFd,
 };
 use termios::{ECHO, ICANON, TCSANOW, Termios, tcsetattr};
-use crate::error::VMError;
 
 /// Takes a number whose size in bits is determined by `bit_count`
 /// and extends it so that its size is 16 bits, always taking into
@@ -22,8 +22,6 @@ pub fn sign_extend(mut x: u16, bit_count: usize) -> Result<u16, VMError> {
     }
     Ok(x)
 }
-
-
 
 /// Reads one byte from the stdin
 pub fn getchar(reader: &mut impl Read) -> Result<[u8; 1], VMError> {

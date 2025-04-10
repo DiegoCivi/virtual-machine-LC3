@@ -1,7 +1,16 @@
-use std::{env::Args, fs, io::{stdin, stdout, Error, Read, Write}, num::TryFromIntError, process::exit};
+use std::{
+    env::Args,
+    fs,
+    io::{Error, Read, Write, stdin, stdout},
+    num::TryFromIntError,
+    process::exit,
+};
 
 use crate::{
-    error::VMError, hardware::{CondFlag, Memory, OpCode, Register, Registers}, trap_code::*, utils::{getchar, sign_extend, stdout_flush, stdout_write}
+    error::VMError,
+    hardware::{CondFlag, Memory, OpCode, Register, Registers},
+    trap_code::*,
+    utils::{getchar, sign_extend, stdout_flush, stdout_write},
 };
 
 const NULL: u16 = 0x0000;
@@ -352,10 +361,7 @@ impl VM {
     /// (the rightmost 9 bits of the instruction enconding) we get the first memory
     /// address, then if we read it we get the final address. That
     /// final address is the one that is going to get written.
-    pub fn store_indirect(
-        &mut self,
-        instr: u16,
-    ) -> Result<(), VMError> {
+    pub fn store_indirect(&mut self, instr: u16) -> Result<(), VMError> {
         // Source Register
         let sr = Register::from_u16((instr >> 9) & THREE_BIT_MASK)?;
         // PCoffset9 section
@@ -376,10 +382,7 @@ impl VM {
     ///
     /// The BaseR and the offset6 sections can be found on the instruction enconding.
     /// The first holds a register to use, the second one holds and embedded value.
-    pub fn store_register(
-        &mut self,
-        instr: u16,
-    ) -> Result<(), VMError> {
+    pub fn store_register(&mut self, instr: u16) -> Result<(), VMError> {
         // Source Register
         let sr = Register::from_u16((instr >> 9) & THREE_BIT_MASK)?;
         // BaseR section
@@ -397,10 +400,7 @@ impl VM {
     /// trapvect8 section can be found in the 8 rightmost bits, and from there
     /// we can get the trap code that will tell us which of the trap routines
     /// we have to execute.
-    pub fn trap(
-        &mut self,
-        instr: u16,
-    ) -> Result<(), VMError> {
+    pub fn trap(&mut self, instr: u16) -> Result<(), VMError> {
         self.regs[Register::R7] = self.regs[Register::PC];
         let trap_code = TrapCode::try_from(instr & EIGHT_BIT_MASK)?;
         let mut std_in = stdin().lock();
@@ -452,10 +452,7 @@ impl VM {
     /// Writes a null-terminated string into stdout. The characters are contained in consecutive memory locations,
     /// one character per memory location, starting with the address specified in R0. Writing
     /// terminates with the occurrence of x0000 in a memory location.
-    pub fn puts(
-        &mut self,
-        writer: &mut impl Write,
-    ) -> Result<(), VMError> {
+    pub fn puts(&mut self, writer: &mut impl Write) -> Result<(), VMError> {
         // Get the address of the first character and read it
         let mut c_addr = self.regs[Register::R0];
         let mut c = self.mem.read(c_addr)?;
@@ -475,10 +472,7 @@ impl VM {
     /// Writes a null-terminated string into stdout. The characters are contained in consecutive memory locations,
     /// but this time there are two characters per memory location, starting with the address specified in R0. Writing
     /// terminates with the occurrence of x0000 in a memory location.
-    pub fn puts_p(
-        &mut self,
-        writer: &mut impl Write,
-    ) -> Result<(), VMError> {
+    pub fn puts_p(&mut self, writer: &mut impl Write) -> Result<(), VMError> {
         // Get the address of the first characters and read them
         let mut c_addr = self.regs[Register::R0];
         let mut c = self.mem.read(c_addr)?;
@@ -519,10 +513,14 @@ impl VM {
 impl Default for VM {
     /// Creates a VM instance with all the registers and
     /// memory locations set to 0.
-    /// 
+    ///
     /// This is used for easier testing
     fn default() -> Self {
-        Self { mem: Memory::new(), regs: Registers::new(), running: true }
+        Self {
+            mem: Memory::new(),
+            regs: Registers::new(),
+            running: true,
+        }
     }
 }
 
@@ -531,8 +529,6 @@ mod tests {
     use std::io::Cursor;
 
     use super::*;
-
-      
 
     #[test]
     /// Test if doing the bitwise 'AND' with register mode
@@ -860,7 +856,6 @@ mod tests {
             vm.regs[Register::R1]
         );
     }
-
 
     #[test]
     /// Test if store indirect instruction changes the value in memory.

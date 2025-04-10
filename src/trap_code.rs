@@ -1,6 +1,5 @@
 use crate::error::VMError;
 
-
 pub enum TrapCode {
     GetC,
     Out,
