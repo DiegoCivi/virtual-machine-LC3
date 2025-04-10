@@ -133,9 +133,10 @@ pub fn jump(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
 
 /// Changes the PC register with the value on a register that is specified
 /// on the R1 section of the encoding or in the same instruction encoding.
-/// This depends on the long flag situated in the bit 11. The long flag
-/// being set means it can be a value of eleven bits. If the flags is not
-/// set, the value is taken from a register.
+/// This depends on the long flag situated in the bit 11, which is taken by shifting right
+/// the instruction 11 times and checking if it is a 1 or a 0. The long flag
+/// being 1 means it can be a value of eleven bits. If the flag is a 0,
+/// the value is taken from a register.
 pub fn jump_register(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     let long_flag = (instr >> 11) & 1;
     regs[Register::R7] = regs[Register::PC];
@@ -150,8 +151,10 @@ pub fn jump_register(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     Ok(())
 }
 
-/// Loads a value from a location in memory that is pointed by another memory
-/// location, into a register
+/// Loads a value into a register using indirect addressing.
+/// First, it computes a memory address by adding a PC offset to the current PC, 
+/// and reads the value at that memory address. This value is treated as the final memory address.
+/// Then, it loads the value stored at that final memory address into the destination register.
 ///
 /// ### Arguments
 ///
@@ -187,8 +190,9 @@ pub fn load(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(),
     Ok(())
 }
 
-/// Loads a value that is located in a memory address, formed by the addition
-/// of the value on a register and in the offset6 section, into a desired register
+/// Loads a value that is located in a memory address.  This value is formed by
+/// adding the value on a register and the one in the offset6 section. Then,
+/// memory is read at this value and that is set into a desired register.
 pub fn load_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> Result<(), VMError> {
     // Destination Register
     let dr = Register::from_u16((instr >> 9) & THREE_BIT_MASK)?;
@@ -204,8 +208,8 @@ pub fn load_register(instr: u16, regs: &mut Registers, memory: &mut Memory) -> R
     Ok(())
 }
 
-/// Loads a value created from the addition of the value of the PC and the
-/// one in the PCoffset9 section, into a register
+/// Loads a value into a register. This value is crated by adding the value of the PC and the
+/// one in the PCoffset9 section, which is formed by the 9 rightmost bits in the intruction encoding.
 pub fn load_effective_address(instr: u16, regs: &mut Registers) -> Result<(), VMError> {
     // Destination Register
     let dr = Register::from_u16((instr >> 9) & THREE_BIT_MASK)?;
