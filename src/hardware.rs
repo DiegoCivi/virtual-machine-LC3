@@ -199,9 +199,10 @@ impl TryFrom<u16> for OpCode {
             0b1100 => Ok(OpCode::Jmp),
             0b1110 => Ok(OpCode::Lea),
             0b1111 => Ok(OpCode::Trap),
-            _ => Err(VMError::Conversion(String::from(
-                "Invalid u16 for OpcCode conversion",
-            ))),
+            _ => {
+                let err_str = format!("Invalid u16 ({:?}) for OpCode conversion", value);
+                Err(VMError::Conversion(err_str))
+            }
         }
     }
 }
